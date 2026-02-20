@@ -1,4 +1,4 @@
-import api from "./api";
+﻿import api from "./api";
 
 const planService = {
   async generate(subjectId) {
@@ -13,3 +13,4 @@ const planService = {
 };
 
 export default planService;
+

@@ -1,4 +1,4 @@
-import api from "./api";
+﻿import api from "./api";
 
 const authService = {
   async register(payload) {
@@ -18,3 +18,4 @@ const authService = {
 };
 
 export default authService;
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import subjectService from "../services/subjectService";
 import planService from "../services/planService";
@@ -79,9 +79,10 @@ function SubjectDetailPage() {
     setError("");
 
     try {
-      const response = type === "generate"
-        ? await planService.generate(subjectId)
-        : await planService.recalculate(subjectId);
+      const response =
+        type === "generate"
+          ? await planService.generate(subjectId)
+          : await planService.recalculate(subjectId);
       setActionMessage(`${type === "generate" ? "Generated" : "Recalculated"} ${response.totalDays} days`);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update study plan");
@@ -91,33 +92,35 @@ function SubjectDetailPage() {
   if (loading) return <Loader label="Loading subject..." />;
 
   if (!subject) {
-    return <p className="text-sm text-red-600">Subject not found.</p>;
+    return <p className="status-error">Subject not found.</p>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-card bg-white p-4 shadow-soft">
+      <div className="surface-card p-4">
         <h2 className="text-lg font-semibold text-slate-800">{subject.name}</h2>
-        <p className="text-sm text-slate-500">Exam: {new Date(subject.examDate).toLocaleDateString()}</p>
+        <p className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
+          Exam: {new Date(subject.examDate).toLocaleDateString()}
+        </p>
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-lg bg-red-50 p-2 text-red-700">Weak: {strengthStats.weak}</div>
-          <div className="rounded-lg bg-blue-50 p-2 text-blue-700">Normal: {strengthStats.normal}</div>
-          <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">Strong: {strengthStats.strong}</div>
+          <div className="rounded-xl bg-red-50 p-2 text-red-700">Weak: {strengthStats.weak}</div>
+          <div className="rounded-xl bg-blue-50 p-2 text-blue-700">Normal: {strengthStats.normal}</div>
+          <div className="rounded-xl bg-emerald-50 p-2 text-emerald-700">Strong: {strengthStats.strong}</div>
         </div>
       </div>
 
-      <form onSubmit={addTopic} className="rounded-card bg-white p-4 shadow-soft">
-        <p className="mb-3 text-sm font-semibold text-slate-700">Add Topic</p>
+      <form onSubmit={addTopic} className="surface-card p-4">
+        <p className="mb-3 section-title">Add Topic</p>
         <div className="space-y-2">
           <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="field-input"
             placeholder="Topic title"
             value={topicForm.title}
             onChange={(e) => setTopicForm((prev) => ({ ...prev, title: e.target.value }))}
             required
           />
           <select
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="field-input"
             value={topicForm.strength}
             onChange={(e) => setTopicForm((prev) => ({ ...prev, strength: e.target.value }))}
           >
@@ -128,55 +131,40 @@ function SubjectDetailPage() {
             ))}
           </select>
           <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="field-input"
             type="number"
             min="10"
             value={topicForm.estimatedMinutes}
             onChange={(e) => setTopicForm((prev) => ({ ...prev, estimatedMinutes: e.target.value }))}
           />
         </div>
-        <button
-          type="submit"
-          className="mt-3 w-full rounded-lg bg-brand-500 py-2 text-sm font-semibold text-white"
-        >
+        <button type="submit" className="btn-primary mt-3">
           Add Topic
         </button>
       </form>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => runPlanAction("generate")}
-          className="rounded-lg bg-brand-500 py-2 text-sm font-semibold text-white"
-        >
+        <button type="button" onClick={() => runPlanAction("generate")} className="btn-primary">
           Generate Plan
         </button>
-        <button
-          type="button"
-          onClick={() => runPlanAction("recalculate")}
-          className="rounded-lg bg-slate-700 py-2 text-sm font-semibold text-white"
-        >
+        <button type="button" onClick={() => runPlanAction("recalculate")} className="btn-secondary">
           Recalculate
         </button>
       </div>
 
-      {actionMessage ? <p className="text-sm text-emerald-700">{actionMessage}</p> : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {actionMessage ? <p className="status-success">{actionMessage}</p> : null}
+      {error ? <p className="status-error">{error}</p> : null}
 
       <div className="space-y-2">
         {topics.map((topic) => (
-          <div key={topic._id} className="flex items-center justify-between rounded-card bg-white p-3 shadow-soft">
+          <div key={topic._id} className="surface-card flex items-center justify-between p-3">
             <div>
               <p className="text-sm font-semibold text-slate-800">{topic.title}</p>
               <p className="text-xs text-slate-500">
-                {topic.strength} • {topic.estimatedMinutes} mins
+                {topic.strength} - {topic.estimatedMinutes} mins
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => removeTopic(topic._id)}
-              className="rounded-lg bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
-            >
+            <button type="button" onClick={() => removeTopic(topic._id)} className="btn-danger-soft">
               Remove
             </button>
           </div>
@@ -187,3 +175,4 @@ function SubjectDetailPage() {
 }
 
 export default SubjectDetailPage;
+

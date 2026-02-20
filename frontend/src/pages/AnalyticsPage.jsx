@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+ï»¿import { useEffect, useState } from "react";
 import analyticsService from "../services/analyticsService";
 import ProgressLineChart from "../components/ProgressLineChart";
 import WeakCoveragePieChart from "../components/WeakCoveragePieChart";
@@ -30,13 +30,13 @@ function AnalyticsPage() {
 
   return (
     <div className="space-y-4">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="status-error">{error}</p> : null}
 
-      <div className="rounded-card bg-white p-4 shadow-soft">
-        <p className="text-sm text-slate-500">Readiness Score</p>
+      <div className="surface-card p-4">
+        <p className="section-title">Readiness Score</p>
         <p className="text-3xl font-bold text-brand-700">{overview?.readiness || 0}</p>
         <p className="mt-2 text-xs text-slate-500">
-          completion {overview?.metrics?.completion || 0}% • weak coverage {overview?.metrics?.weakCoverage || 0}% • streak consistency {overview?.metrics?.streakConsistency || 0}%
+          completion {overview?.metrics?.completion || 0}% - weak coverage {overview?.metrics?.weakCoverage || 0}% - streak consistency {overview?.metrics?.streakConsistency || 0}%
         </p>
       </div>
 
@@ -47,3 +47,4 @@ function AnalyticsPage() {
 }
 
 export default AnalyticsPage;
+

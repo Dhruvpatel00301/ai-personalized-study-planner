@@ -1,4 +1,4 @@
-import api from "./api";
+﻿import api from "./api";
 
 const subjectService = {
   async getSubjects() {
@@ -41,3 +41,4 @@ const subjectService = {
 };
 
 export default subjectService;
+

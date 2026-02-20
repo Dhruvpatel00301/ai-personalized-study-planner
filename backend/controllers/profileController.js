@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { uploadBufferToCloudinary, deleteFromCloudinary } = require("../utils/cloudinary");
 
 const isValidTimezone = (timezone) => {
   try {
@@ -41,6 +42,7 @@ const updateProfile = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profileImageUrl: user.profileImageUrl,
         timezone: user.timezone,
         reminderHour: user.reminderHour,
         streakCurrent: user.streakCurrent,
@@ -52,6 +54,38 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+const updateProfileImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Profile image is required" });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    const uploaded = await uploadBufferToCloudinary(req.file.buffer, req.file.mimetype);
+
+    await deleteFromCloudinary(user.profileImagePublicId);
+
+    user.profileImageUrl = uploaded.secure_url;
+    user.profileImagePublicId = uploaded.public_id;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Profile image updated",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImageUrl: user.profileImageUrl,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   updateProfile,
+  updateProfileImage,
 };

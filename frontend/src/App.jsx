@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+﻿import { Navigate, Route, Routes } from "react-router-dom";
 import MobileOnlyGate from "./components/MobileOnlyGate";
 import AppShell from "./components/AppShell";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -39,3 +39,4 @@ function App() {
 }
 
 export default App;
+

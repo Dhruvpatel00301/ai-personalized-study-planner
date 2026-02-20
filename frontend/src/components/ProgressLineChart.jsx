@@ -1,4 +1,4 @@
-import {
+﻿import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
@@ -26,7 +26,7 @@ function ProgressLineChart({ lineChart }) {
   };
 
   return (
-    <div className="h-56 rounded-card bg-white p-4 shadow-soft">
+    <div className="surface-card h-56 p-4">
       <p className="mb-3 text-sm font-semibold text-slate-700">Progress Trend</p>
       <Line data={data} options={lineOptions} />
     </div>
@@ -34,3 +34,4 @@ function ProgressLineChart({ lineChart }) {
 }
 
 export default ProgressLineChart;
+

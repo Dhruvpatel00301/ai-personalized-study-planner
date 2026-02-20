@@ -1,4 +1,4 @@
-import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
+﻿import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
 import { Pie } from "react-chartjs-2";
 import { pieOptions } from "../utils/chartConfig";
 
@@ -17,7 +17,7 @@ function WeakCoveragePieChart({ pieChart }) {
   };
 
   return (
-    <div className="h-56 rounded-card bg-white p-4 shadow-soft">
+    <div className="surface-card h-56 p-4">
       <p className="mb-3 text-sm font-semibold text-slate-700">Weak Topic Coverage</p>
       <Pie data={data} options={pieOptions} />
     </div>
@@ -25,3 +25,4 @@ function WeakCoveragePieChart({ pieChart }) {
 }
 
 export default WeakCoveragePieChart;
+

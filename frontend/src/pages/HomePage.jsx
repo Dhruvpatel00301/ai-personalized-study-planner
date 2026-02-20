@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
 import ProgressSummaryCard from "../components/ProgressSummaryCard";
 import TaskCard from "../components/TaskCard";
@@ -12,6 +12,7 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState(null);
   const [error, setError] = useState("");
+  const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
   const loadSummary = async () => {
     setLoading(true);
@@ -44,7 +45,7 @@ function HomePage() {
 
   return (
     <div className="space-y-4">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="status-error">{error}</p> : null}
 
       <ProgressSummaryCard
         progressPercent={summary?.progressPercent || 0}
@@ -52,14 +53,18 @@ function HomePage() {
         streakBest={summary?.streakBest || 0}
       />
 
-      <div className="rounded-card bg-white p-4 shadow-soft">
-        <p className="text-sm text-slate-500">Today</p>
+      <div className="surface-card p-4">
+        <p className="section-title">Today</p>
         <p className="text-base font-semibold text-slate-800">{todayLabel()}</p>
       </div>
 
-      <div className="rounded-card bg-brand-50 p-4 shadow-soft">
-        <p className="text-sm text-brand-700">AI tip</p>
-        <p className="text-sm text-slate-700">{AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)]}</p>
+      <div className="surface-card bg-brand-50/90 p-4">
+        <p className="section-title text-brand-700">AI Tip</p>
+        <p className="text-sm text-slate-700">{tip}</p>
+      </div>
+
+      <div className="px-1">
+        <p className="section-title">Today's Tasks</p>
       </div>
 
       {summary?.todayTasks?.length ? (
@@ -84,3 +89,4 @@ function HomePage() {
 }
 
 export default HomePage;
+

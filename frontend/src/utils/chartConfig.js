@@ -1,4 +1,4 @@
-export const lineOptions = {
+﻿export const lineOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -20,3 +20,4 @@ export const pieOptions = {
     legend: { position: "bottom" },
   },
 };
+

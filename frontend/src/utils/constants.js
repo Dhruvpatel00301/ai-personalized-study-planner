@@ -1,4 +1,4 @@
-export const NAV_ITEMS = [
+﻿export const NAV_ITEMS = [
   { label: "Home", path: "/" },
   { label: "Subjects", path: "/subjects" },
   { label: "Analytics", path: "/analytics" },
@@ -12,3 +12,4 @@ export const AI_TIPS = [
   "Use revision days to summarize and self-test, not re-read only.",
   "If you miss a day, recover with one short session immediately.",
 ];
+

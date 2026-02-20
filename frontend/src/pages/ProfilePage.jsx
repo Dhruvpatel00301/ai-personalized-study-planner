@@ -1,78 +1,67 @@
-import { useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import profileService from "../services/profileService";
 
 function ProfilePage() {
-  const { user, setUser, logout } = useAuth();
-  const [form, setForm] = useState({
-    name: user?.name || "",
-    timezone: user?.timezone || "America/New_York",
-    reminderHour: user?.reminderHour ?? 19,
-  });
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const { user, setUser } = useAuth();
+  const [uploading, setUploading] = useState(false);
 
-  const handleUpdate = async (event) => {
-    event.preventDefault();
-    setError("");
-    setMessage("");
+  const initials = useMemo(() => {
+    const name = user?.name || "U";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }, [user?.name]);
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
 
     try {
-      const data = await profileService.updateProfile({
-        ...form,
-        reminderHour: Number(form.reminderHour),
-      });
-      setUser(data);
-      setMessage("Profile updated successfully.");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile");
+      const data = await profileService.uploadProfileImage(file);
+      setUser((prev) => ({ ...prev, ...data }));
+    } catch {
+      // Keep the profile surface minimal and avoid extra status elements.
+    } finally {
+      setUploading(false);
+      event.target.value = "";
     }
   };
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleUpdate} className="rounded-card bg-white p-4 shadow-soft">
-        <p className="mb-3 text-sm font-semibold text-slate-700">Profile Settings</p>
+    <div className="surface-card p-5">
+      <div className="flex flex-col items-center">
+        <label htmlFor="profile-image-upload" className={uploading ? "cursor-not-allowed" : "cursor-pointer"}>
+          {user?.profileImageUrl ? (
+            <img
+              src={user.profileImageUrl}
+              alt="Profile"
+              className="h-24 w-24 rounded-full border border-white object-cover shadow-soft"
+            />
+          ) : (
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">
+              {initials}
+            </div>
+          )}
+        </label>
 
-        <div className="space-y-2">
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={form.name}
-            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Name"
-          />
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={form.timezone}
-            onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
-            placeholder="Timezone"
-          />
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            type="number"
-            min="0"
-            max="23"
-            value={form.reminderHour}
-            onChange={(e) => setForm((prev) => ({ ...prev, reminderHour: e.target.value }))}
-            placeholder="Reminder hour"
-          />
-        </div>
+        <input
+          id="profile-image-upload"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          disabled={uploading}
+          className="hidden"
+        />
 
-        {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
-
-        <button type="submit" className="mt-3 w-full rounded-lg bg-brand-500 py-2 text-sm font-semibold text-white">
-          Save Changes
-        </button>
-      </form>
-
-      <button
-        type="button"
-        onClick={logout}
-        className="w-full rounded-lg bg-slate-700 py-2 text-sm font-semibold text-white"
-      >
-        Logout
-      </button>
+        <p className="mt-4 text-lg font-semibold text-slate-800">{user?.name || "-"}</p>
+        <p className="text-sm text-slate-500">{user?.email || "-"}</p>
+      </div>
     </div>
   );
 }
