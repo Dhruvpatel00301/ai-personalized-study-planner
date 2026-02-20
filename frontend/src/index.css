@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eff7ff 0%, #dcecff 100%);
+  color: #12314f;
+}
+
+.mobile-app {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: transparent;
+}
+
+.desktop-only-message {
+  display: none;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  color: #12314f;
+  font-weight: 600;
+}
+
+@media (min-width: 769px) {
+  /* Enforce mobile-only experience by hiding app UI on larger screens. */
+  .mobile-app {
+    display: none !important;
+  }
+
+  .desktop-only-message {
+    display: flex !important;
+  }
+}
