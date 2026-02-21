@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import profileService from "../services/profileService";
 
 function ProfilePage() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const [uploading, setUploading] = useState(false);
 
   const initials = useMemo(() => {
@@ -61,6 +61,10 @@ function ProfilePage() {
 
         <p className="mt-4 text-lg font-semibold text-slate-800">{user?.name || "-"}</p>
         <p className="text-sm text-slate-500">{user?.email || "-"}</p>
+
+        <button type="button" onClick={logout} className="btn-secondary mt-4">
+          Logout
+        </button>
       </div>
     </div>
   );
