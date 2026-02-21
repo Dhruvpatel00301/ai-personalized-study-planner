@@ -1,7 +1,14 @@
 ﻿import axios from "axios";
 
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const isLocalHost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+const resolvedBaseUrl =
+  configuredBaseUrl ||
+  (isLocalHost ? "http://localhost:5000/api" : "https://studyplanner-backend-12uu.onrender.com/api");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+  baseURL: resolvedBaseUrl,
 });
 
 api.interceptors.request.use((config) => {
@@ -26,4 +33,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
