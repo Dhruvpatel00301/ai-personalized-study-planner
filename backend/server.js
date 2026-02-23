@@ -18,12 +18,19 @@ const authLimiter = rateLimit({
 });
 
 app.use(helmet());
-// allow CORS from the configured client URL and localhost during development
-const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
+// allow CORS from the configured client URL(s) and localhost during development
+// CLIENT_URL can be a comma-separated list of origins (production & dev). If it's
+// missing we still add the common localhost dev URL so the server never throws.
+const rawOrigins = process.env.CLIENT_URL || "";
+const allowedOrigins = rawOrigins
+  .split(",")
+  .map((u) => u.trim())
+  .filter(Boolean)
+  .concat("http://localhost:5173");
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (like CURL or mobile apps)
+      // allow server-to-server requests (no origin) or any allowed origin
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
