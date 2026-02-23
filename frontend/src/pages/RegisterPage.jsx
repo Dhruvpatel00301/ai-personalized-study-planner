@@ -6,6 +6,10 @@ function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  // visibility toggles will respond to hold events
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -15,8 +19,13 @@ function RegisterPage() {
     setSubmitting(true);
 
     try {
+      if (form.password !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
       await register(form);
-      navigate("/", { replace: true });
+      // after registration go to login page so the user can sign in
+      navigate("/login", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
     } finally {
@@ -47,14 +56,48 @@ function RegisterPage() {
             onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
             required
           />
-          <input
-            className="field-input"
-            placeholder="Password"
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-            required
-          />
+          <div className="relative">
+            <input
+              className="field-input pr-10"
+              placeholder="Password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 flex items-center text-xl"
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              onTouchStart={() => setShowPassword(true)}
+              onTouchEnd={() => setShowPassword(false)}
+            >
+              {"👁"}
+            </button>
+          </div>
+          <div className="relative">
+            <input
+              className="field-input pr-10"
+              placeholder="Confirm password"
+              type={showConfirm ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 flex items-center text-xl"
+              onMouseDown={() => setShowConfirm(true)}
+              onMouseUp={() => setShowConfirm(false)}
+              onMouseLeave={() => setShowConfirm(false)}
+              onTouchStart={() => setShowConfirm(true)}
+              onTouchEnd={() => setShowConfirm(false)}
+            >
+              {"👁"}
+            </button>
+          </div>
         </div>
 
         {error ? <p className="status-error mt-3">{error}</p> : null}

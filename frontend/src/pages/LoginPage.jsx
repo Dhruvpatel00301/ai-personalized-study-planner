@@ -7,6 +7,8 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  // password visibility will be toggled by holding the button
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -43,14 +45,28 @@ function LoginPage() {
             onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
             required
           />
-          <input
-            className="field-input"
-            placeholder="Password"
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-            required
-          />
+          <div className="relative">
+            <input
+              className="field-input pr-10"
+              placeholder="Password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 flex items-center text-xl"
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              onTouchStart={() => setShowPassword(true)}
+              onTouchEnd={() => setShowPassword(false)}
+            >
+              {/* use a single eye icon to avoid monkey emoji */}
+            {"👁"}
+            </button>
+          </div>
         </div>
 
         {error ? <p className="status-error mt-3">{error}</p> : null}

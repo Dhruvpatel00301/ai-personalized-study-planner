@@ -18,7 +18,20 @@ const authLimiter = rateLimit({
 });
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
+// allow CORS from the configured client URL and localhost during development
+const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow requests with no origin (like CURL or mobile apps)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS policy: origin ${origin} not allowed`));
+      }
+    },
+  })
+);
 app.use(express.json());
 app.use("/api/auth", authLimiter);
 

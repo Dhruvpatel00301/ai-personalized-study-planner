@@ -5,6 +5,10 @@ import profileService from "../services/profileService";
 function ProfilePage() {
   const { user, setUser, logout } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.name || "");
+  const [editEmail, setEditEmail] = useState(user?.email || "");
+  const [saving, setSaving] = useState(false);
 
   const initials = useMemo(() => {
     const name = user?.name || "U";
@@ -59,8 +63,71 @@ function ProfilePage() {
           className="hidden"
         />
 
-        <p className="mt-4 text-lg font-semibold text-slate-800">{user?.name || "-"}</p>
-        <p className="text-sm text-slate-500">{user?.email || "-"}</p>
+        {editing ? (
+          <div className="space-y-3 mt-4 w-full">
+            <input
+              className="field-input w-full"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Full name"
+            />
+            <input
+              className="field-input w-full"
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              placeholder="Email"
+              type="email"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={saving}
+                onClick={() => setEditing(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    const updated = await profileService.updateProfile({
+                      name: editName,
+                      email: editEmail,
+                    });
+                    setUser((prev) => ({ ...prev, ...updated }));
+                    setEditing(false);
+                  } catch (err) {
+                    // could show a toast or error state here
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-4 text-lg font-semibold text-slate-800">{user?.name || "-"}</p>
+            <p className="text-sm text-slate-500">{user?.email || "-"}</p>
+            <button
+              type="button"
+              className="btn-secondary mt-4"
+              onClick={() => {
+                setEditName(user?.name || "");
+                setEditEmail(user?.email || "");
+                setEditing(true);
+              }}
+            >
+              Edit profile
+            </button>
+          </>
+        )}
 
         <button type="button" onClick={logout} className="btn-secondary mt-4">
           Logout
