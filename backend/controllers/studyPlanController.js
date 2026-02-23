@@ -32,6 +32,7 @@ const recalculateSubjectSchedule = async ({ userId, subjectId, startDate, includ
   }
 
   const missedTopicIds = [];
+  let overdueScheduleIds = [];
 
   if (includeMissed) {
     const overdueSchedules = await DailySchedule.find({
@@ -39,12 +40,21 @@ const recalculateSubjectSchedule = async ({ userId, subjectId, startDate, includ
       subjectId,
       date: { $lt: startDate },
       "tasks.completed": false,
-    }).select("tasks");
+    }).select("_id tasks");
 
     overdueSchedules.forEach((schedule) => {
       schedule.tasks
         .filter((task) => !task.completed)
         .forEach((task) => missedTopicIds.push(task.topicId));
+    });
+
+    overdueScheduleIds = overdueSchedules.map((schedule) => schedule._id);
+  }
+
+  // Remove consumed overdue schedules so auto-recalculation does not loop on each dashboard load.
+  if (includeMissed && overdueScheduleIds.length) {
+    await DailySchedule.deleteMany({
+      _id: { $in: overdueScheduleIds },
     });
   }
 
