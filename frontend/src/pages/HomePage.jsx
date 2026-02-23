@@ -46,10 +46,27 @@ function HomePage() {
   }, [currentDate]);
 
   const handleComplete = async (taskId) => {
+    setError("");
     setSavingTaskId(taskId);
+
+    // optimistic update so user sees 'Done' immediately
+    setSummary((prev) => {
+      if (!prev) return prev;
+      const updated = prev.todayTasks.map((t) =>
+        t.taskId === taskId ? { ...t, completed: true } : t
+      );
+      return { ...prev, todayTasks: updated };
+    });
+
     try {
       await dashboardService.markComplete(taskId);
       await loadSummary();
+    } catch (err) {
+      // if something went wrong (404 due to date change or network), refresh and show message
+      await loadSummary();
+      setError(
+        err.response?.data?.message || "Unable to mark task complete"
+      );
     } finally {
       setSavingTaskId(null);
     }
