@@ -14,6 +14,9 @@ function HomePage() {
   const [error, setError] = useState("");
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
+  // track the currently displayed date so we can auto-refresh past midnight
+  const [currentDate, setCurrentDate] = useState(todayLabel());
+
   const loadSummary = async () => {
     setLoading(true);
     setError("");
@@ -29,7 +32,18 @@ function HomePage() {
 
   useEffect(() => {
     loadSummary();
-  }, []);
+
+    // check every minute whether the date has changed, and reload if so
+    const interval = setInterval(() => {
+      const today = todayLabel();
+      if (today !== currentDate) {
+        setCurrentDate(today);
+        loadSummary();
+      }
+    }, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [currentDate]);
 
   const handleComplete = async (taskId) => {
     setSavingTaskId(taskId);

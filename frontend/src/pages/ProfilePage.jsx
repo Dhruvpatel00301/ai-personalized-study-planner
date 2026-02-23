@@ -40,19 +40,34 @@ function ProfilePage() {
   return (
     <div className="surface-card p-5">
       <div className="flex flex-col items-center">
-        <label htmlFor="profile-image-upload" className={uploading ? "cursor-not-allowed" : "cursor-pointer"}>
-          {user?.profileImageUrl ? (
-            <img
-              src={user.profileImageUrl}
-              alt="Profile"
-              className="h-24 w-24 rounded-full border border-white object-cover shadow-soft"
-            />
-          ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">
-              {initials}
-            </div>
-          )}
-        </label>
+        <div className="relative">
+          <label
+            htmlFor="profile-image-upload"
+            className={
+              uploading
+                ? "cursor-not-allowed"
+                : "cursor-pointer flex items-center justify-center"
+            }
+          >
+            {user?.profileImageUrl ? (
+              <img
+                src={user.profileImageUrl}
+                alt="Profile"
+                className="h-24 w-24 rounded-full border border-white object-cover shadow-soft"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">
+                {initials}
+              </div>
+            )}
+            {/* overlay edit button */}
+            {!uploading && (
+              <span className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-white text-xs flex items-center justify-center shadow-sm">
+                ✎
+              </span>
+            )}
+          </label>
+        </div>
 
         <input
           id="profile-image-upload"

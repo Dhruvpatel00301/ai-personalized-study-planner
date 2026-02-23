@@ -64,8 +64,11 @@ const getTodaySchedule = async (req, res, next) => {
 
 const markTaskComplete = async (req, res, next) => {
   try {
+    // only allow completing tasks that belong to the current day for the user's timezone
+    const today = getTodayInTimeZone(req.user.timezone);
     const schedule = await DailySchedule.findOne({
       userId: req.user._id,
+      date: today,
       "tasks._id": req.params.taskId,
     });
 
