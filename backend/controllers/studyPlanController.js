@@ -5,23 +5,29 @@ const DailySchedule = require("../models/DailySchedule");
 const { buildSchedulePayload, calculateDaysLeft } = require("../utils/schedulerAlgorithm");
 const { getTodayInTimeZone } = require("../utils/dateTime");
 
-const upsertPlanRecord = async ({ userId, subjectId, startDate, examDate, status }) => {
+const upsertPlanRecord = async ({ userId, subjectId, examId = null, startDate, examDate, status }) => {
+  const update = {
+    userId,
+    subjectId,
+    generatedAt: new Date(),
+    startDate,
+    examDate,
+    status,
+  };
+  if (examId) {
+    update.examId = examId;
+  }
+
   await StudyPlan.findOneAndUpdate(
     { userId, subjectId },
-    {
-      userId,
-      subjectId,
-      generatedAt: new Date(),
-      startDate,
-      examDate,
-      status,
-    },
+    update,
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
 };
 
 const recalculateSubjectSchedule = async ({ userId, subjectId, startDate, includeMissed = true }) => {
-  const subject = await Subject.findOne({ _id: subjectId, userId });
+  // fetch subject along with its parent exam so we can read the date
+  const subject = await Subject.findOne({ _id: subjectId, userId }).populate("examId");
   if (!subject) {
     throw new Error("Subject not found");
   }
@@ -76,11 +82,16 @@ const recalculateSubjectSchedule = async ({ userId, subjectId, startDate, includ
     await DailySchedule.insertMany(schedulePayload);
   }
 
+  // examDate is kept on the exam document; fall back to the legacy field for
+  // subjects created before exams were introduced so existing users do not
+  // immediately break after upgrade.
+  const examDateVal = subject.examId ? subject.examId.examDate : subject.examDate;
   await upsertPlanRecord({
     userId,
     subjectId,
+    examId: subject.examId ? subject.examId._id : null,
     startDate,
-    examDate: subject.examDate,
+    examDate: examDateVal,
     status: includeMissed ? "regenerated" : "active",
   });
 
@@ -88,7 +99,7 @@ const recalculateSubjectSchedule = async ({ userId, subjectId, startDate, includ
     subject,
     totalDays: schedulePayload.length,
     missedTasksCarried: missedTopicIds.length,
-    daysLeft: calculateDaysLeft(startDate, new Date(subject.examDate)),
+    daysLeft: calculateDaysLeft(startDate, new Date(examDateVal)),
   };
 };
 

@@ -1,8 +1,9 @@
 ﻿import api from "./api";
 
 const subjectService = {
-  async getSubjects() {
-    const { data } = await api.get("/subjects");
+  async getSubjects(examId = null) {
+    const url = examId ? `/subjects?examId=${examId}` : "/subjects";
+    const { data } = await api.get(url);
     return data.data;
   },
 
@@ -22,6 +23,11 @@ const subjectService = {
 
   async getTopics(subjectId) {
     const { data } = await api.get(`/topics/${subjectId}`);
+    return data.data;
+  },
+
+  async getSubject(subjectId) {
+    const { data } = await api.get(`/subjects/${subjectId}`);
     return data.data;
   },
 

@@ -22,6 +22,16 @@ const createTopic = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Subject not found" });
     }
 
+    // enforce uniqueness per user/subject
+    const existing = await Topic.findOne({
+      userId: req.user._id,
+      subjectId: subject._id,
+      title: { $regex: `^${req.body.title.trim()}$`, $options: "i" },
+    });
+    if (existing) {
+      return res.status(409).json({ success: false, message: "Topic title already exists" });
+    }
+
     const topic = await Topic.create({
       userId: req.user._id,
       subjectId: subject._id,
@@ -32,12 +42,29 @@ const createTopic = async (req, res, next) => {
 
     return res.status(201).json({ success: true, data: topic });
   } catch (error) {
+    // forward duplicate key errors explicitly
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "Topic title already exists" });
+    }
     return next(error);
   }
 };
 
 const updateTopic = async (req, res, next) => {
   try {
+    // if title is being changed, make sure it doesn't conflict
+    if (req.body.title) {
+      const conflict = await Topic.findOne({
+        _id: { $ne: req.params.topicId },
+        userId: req.user._id,
+        subjectId: req.body.subjectId || undefined,
+        title: { $regex: `^${req.body.title.trim()}$`, $options: "i" },
+      });
+      if (conflict) {
+        return res.status(409).json({ success: false, message: "Topic title already exists" });
+      }
+    }
+
     const topic = await Topic.findOneAndUpdate(
       { _id: req.params.topicId, userId: req.user._id },
       req.body,
@@ -50,6 +77,9 @@ const updateTopic = async (req, res, next) => {
 
     return res.json({ success: true, data: topic });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "Topic title already exists" });
+    }
     return next(error);
   }
 };

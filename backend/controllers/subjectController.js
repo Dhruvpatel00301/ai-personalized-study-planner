@@ -5,8 +5,24 @@ const DailySchedule = require("../models/DailySchedule");
 
 const getSubjects = async (req, res, next) => {
   try {
-    const subjects = await Subject.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    const filter = { userId: req.user._id };
+    if (req.query.examId) {
+      filter.examId = req.query.examId;
+    }
+    const subjects = await Subject.find(filter).populate("examId").sort({ createdAt: -1 });
     return res.json({ success: true, data: subjects });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getSubjectById = async (req, res, next) => {
+  try {
+    const subject = await Subject.findOne({ _id: req.params.subjectId, userId: req.user._id }).populate("examId");
+    if (!subject) {
+      return res.status(404).json({ success: false, message: "Subject not found" });
+    }
+    return res.json({ success: true, data: subject });
   } catch (error) {
     return next(error);
   }
@@ -14,11 +30,11 @@ const getSubjects = async (req, res, next) => {
 
 const createSubject = async (req, res, next) => {
   try {
-    const { name, examDate, description } = req.body;
+    const { name, examId, description } = req.body;
     const subject = await Subject.create({
       userId: req.user._id,
       name,
-      examDate,
+      examId,
       description: description || "",
     });
 
@@ -68,6 +84,7 @@ const deleteSubject = async (req, res, next) => {
 
 module.exports = {
   getSubjects,
+  getSubjectById,
   createSubject,
   updateSubject,
   deleteSubject,

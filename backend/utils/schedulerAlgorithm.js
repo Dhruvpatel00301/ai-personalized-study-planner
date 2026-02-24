@@ -88,7 +88,9 @@ const buildSchedulePayload = ({
   startDate,
   missedTopicIds = [],
 }) => {
-  const examDate = dateToUTCMidnight(new Date(subject.examDate));
+  // subject is expected to have its exam populated (subject.examId)
+  const examDateVal = subject.examId ? subject.examId.examDate : subject.examDate;
+  const examDate = dateToUTCMidnight(new Date(examDateVal));
   const start = dateToUTCMidnight(new Date(startDate));
 
   if (examDate < start) {
@@ -143,13 +145,24 @@ const buildSchedulePayload = ({
       }
     }
 
-    history.push(tasks);
+    // ensure we don't accidentally schedule the same topic twice on the
+    // same calendar day (study+revision or duplicate queue entries).
+    // keep the first instance and discard later ones.
+    const seen = new Set();
+    const uniqueTasks = tasks.filter((t) => {
+      const key = String(t.topicId);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    history.push(uniqueTasks);
 
     return {
       userId,
       subjectId: subject._id,
       date: day,
-      tasks,
+      tasks: uniqueTasks,
       completionPercent: 0,
     };
   });

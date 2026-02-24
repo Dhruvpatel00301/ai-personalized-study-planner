@@ -7,7 +7,8 @@ import EmptyState from "../components/EmptyState";
 function SubjectsPage() {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", examDate: "", description: "" });
+  // subjects are now nested under exams, so this page is mostly kept for
+  // backward compatibility. We no longer allow creating subjects directly here.
   const [error, setError] = useState("");
 
   const loadSubjects = async () => {
@@ -22,68 +23,49 @@ function SubjectsPage() {
     }
   };
 
+  const removeSubject = async (subjectId) => {
+    if (!window.confirm("Are you sure you want to delete this subject and all its data?")) {
+      return;
+    }
+    setError("");
+    try {
+      await subjectService.deleteSubject(subjectId);
+      await loadSubjects();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete subject");
+    }
+  };
+
   useEffect(() => {
     loadSubjects();
   }, []);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError("");
 
-    try {
-      await subjectService.createSubject(form);
-      setForm({ name: "", examDate: "", description: "" });
-      await loadSubjects();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create subject");
-    }
-  };
 
   if (loading) return <Loader label="Loading subjects..." />;
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="surface-card p-4">
-        <p className="mb-3 section-title">Create Subject</p>
-        <div className="space-y-2">
-          <input
-            className="field-input"
-            placeholder="Subject name"
-            value={form.name}
-            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-            required
-          />
-          <input
-            className="field-input"
-            type="date"
-            value={form.examDate}
-            onChange={(e) => setForm((prev) => ({ ...prev, examDate: e.target.value }))}
-            required
-          />
-          <textarea
-            className="field-input"
-            rows="2"
-            placeholder="Description (optional)"
-            value={form.description}
-            onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-          />
-        </div>
-
-        {error ? <p className="status-error mt-2">{error}</p> : null}
-
-        <button type="submit" className="btn-primary mt-3">
-          Add Subject
-        </button>
-      </form>
+      <div className="surface-card p-4">
+        <p className="section-title">Subjects are now managed under exams</p>
+        <p className="text-sm">
+          Go to the <a href="/exams" className="text-blue-600">Exams</a> page and select
+          an exam to add subjects for it.
+        </p>
+      </div>
 
       {subjects.length ? (
         <div className="space-y-3">
           {subjects.map((subject) => (
-            <SubjectCard key={subject._id} subject={subject} />
+            <SubjectCard
+              key={subject._id}
+              subject={subject}
+              onDelete={() => removeSubject(subject._id)}
+            />
           ))}
         </div>
       ) : (
-        <EmptyState title="No subjects yet" description="Add a subject to begin building your plan." />
+        <EmptyState title="No subjects yet" description="Create an exam first and add subjects under it." />
       )}
     </div>
   );

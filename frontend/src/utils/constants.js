@@ -1,6 +1,6 @@
 ﻿export const NAV_ITEMS = [
   { label: "Home", path: "/" },
-  { label: "Subjects", path: "/subjects" },
+  { label: "Exams", path: "/exams" },
   { label: "Analytics", path: "/analytics" },
   { label: "Profile", path: "/profile" },
 ];

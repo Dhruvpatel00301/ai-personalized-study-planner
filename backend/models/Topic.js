@@ -37,4 +37,11 @@ const topicSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// ensure a user cannot create two topics with the same title under the same subject
+// use a case‑insensitive collation so "Loops" and "loops" collide
+topicSchema.index(
+  { userId: 1, subjectId: 1, title: 1 },
+  { unique: true, collation: { locale: "en", strength: 2 } }
+);
+
 module.exports = mongoose.model("Topic", topicSchema);

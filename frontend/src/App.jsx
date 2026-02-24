@@ -7,6 +7,8 @@ import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
 import SubjectsPage from "./pages/SubjectsPage";
 import SubjectDetailPage from "./pages/SubjectDetailPage";
+import ExamsPage from "./pages/ExamsPage";
+import ExamDetailPage from "./pages/ExamDetailPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -26,6 +28,8 @@ function App() {
           }
         >
           <Route path="/" element={<HomePage />} />
+          <Route path="/exams" element={<ExamsPage />} />
+          <Route path="/exams/:examId" element={<ExamDetailPage />} />
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />

@@ -14,6 +14,12 @@ const studyPlanSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    examId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Exam",
+      required: false,
+      index: true,
+    },
     generatedAt: {
       type: Date,
       default: Date.now,

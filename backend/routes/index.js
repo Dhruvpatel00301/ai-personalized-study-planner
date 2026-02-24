@@ -7,6 +7,7 @@ const dailyScheduleRoutes = require("./dailyScheduleRoutes");
 const dashboardRoutes = require("./dashboardRoutes");
 const analyticsRoutes = require("./analyticsRoutes");
 const profileRoutes = require("./profileRoutes");
+const examRoutes = require("./examRoutes");
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use("/daily-schedule", dailyScheduleRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/profile", profileRoutes);
+router.use("/exams", examRoutes);
 
 module.exports = router;

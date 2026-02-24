@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const subjectSchema = new mongoose.Schema(
+const examSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,17 +13,14 @@ const subjectSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    examDate: {
+      type: Date,
+      required: true,
+    },
     description: {
       type: String,
       default: "",
       trim: true,
-    },
-    // associate a subject with an exam record instead of storing its own date
-    examId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Exam",
-      required: true,
-      index: true,
     },
     isArchived: {
       type: Boolean,
@@ -33,4 +30,4 @@ const subjectSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Subject", subjectSchema);
+module.exports = mongoose.model("Exam", examSchema);

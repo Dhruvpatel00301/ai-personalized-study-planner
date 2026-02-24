@@ -11,6 +11,7 @@ A full-stack MERN application with a mobile-only frontend for personalized exam 
 ## Key Features
 
 - Authentication: register, login, protected routes (JWT)
+- **Exam-oriented workflow** – create exams with name/date, then add subjects under each exam, and topics (sub‑topics) within subjects. Subjects are linked to an exam. 
 - Subject and topic management with strength labels (`weak`, `normal`, `strong`)
 - Study plan generation and recalculation with weighted scheduler
 - Revision task insertion every 5th day

@@ -3,6 +3,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const validateMiddleware = require("../middlewares/validateMiddleware");
 const {
   getSubjects,
+  getSubjectById,
   createSubject,
   updateSubject,
   deleteSubject,
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.use(authMiddleware);
 router.get("/", getSubjects);
+router.get("/:subjectId", getSubjectById);
 router.post("/", createSubjectValidation, validateMiddleware, createSubject);
 router.put("/:subjectId", updateSubjectValidation, validateMiddleware, updateSubject);
 router.delete("/:subjectId", deleteSubject);

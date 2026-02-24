@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import subjectService from "../services/subjectService";
 import planService from "../services/planService";
 import { STRENGTH_OPTIONS } from "../utils/constants";
@@ -29,12 +29,12 @@ function SubjectDetailPage() {
     setError("");
 
     try {
-      const [subjectsData, topicsData] = await Promise.all([
-        subjectService.getSubjects(),
+      const [subjectData, topicsData] = await Promise.all([
+        subjectService.getSubject(subjectId),
         subjectService.getTopics(subjectId),
       ]);
 
-      setSubject(subjectsData.find((item) => item._id === subjectId) || null);
+      setSubject(subjectData);
       setTopics(topicsData);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load subject details");
@@ -51,6 +51,13 @@ function SubjectDetailPage() {
     event.preventDefault();
     setActionMessage("");
     setError("");
+
+    // client‑side uniqueness check to avoid round trip
+    const newTitle = topicForm.title.trim().toLowerCase();
+    if (topics.some((t) => t.title.trim().toLowerCase() === newTitle)) {
+      setError("Topic title already exists");
+      return;
+    }
 
     try {
       await subjectService.createTopic(subjectId, {
@@ -98,10 +105,17 @@ function SubjectDetailPage() {
   return (
     <div className="space-y-4">
       <div className="surface-card p-4">
+        {subject.examId && (
+          <Link to={`/exams/${subject.examId._id}`} className="mt-0 mb-2 text-blue-600 text-sm inline-block">
+            ← Back to exam
+          </Link>
+        )}
         <h2 className="text-lg font-semibold text-slate-800">{subject.name}</h2>
-        <p className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
-          Exam: {new Date(subject.examDate).toLocaleDateString()}
-        </p>
+        {subject.examId && (
+          <p className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
+            Exam: {subject.examId.name} - {new Date(subject.examId.examDate).toLocaleDateString()}
+          </p>
+        )}
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
           <div className="rounded-xl bg-red-50 p-2 text-red-700">Weak: {strengthStats.weak}</div>
           <div className="rounded-xl bg-blue-50 p-2 text-blue-700">Normal: {strengthStats.normal}</div>

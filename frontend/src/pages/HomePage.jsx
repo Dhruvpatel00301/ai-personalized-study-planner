@@ -112,7 +112,7 @@ function HomePage() {
       ) : (
         <EmptyState
           title="No tasks for today"
-          description="Generate a study plan from Subjects to start your schedule."
+          description="Generate a study plan by adding subjects under an exam to start your schedule."
         />
       )}
     </div>
