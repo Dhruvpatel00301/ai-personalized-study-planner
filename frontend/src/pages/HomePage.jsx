@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
+import examService from "../services/examService";
 import ProgressSummaryCard from "../components/ProgressSummaryCard";
 import ExamTasksGroup from "../components/ExamTasksGroup";
 import Loader from "../components/Loader";
@@ -13,6 +14,7 @@ function HomePage() {
   const [savingTaskId, setSavingTaskId] = useState(null);
   const [error, setError] = useState("");
   const [expandedExam, setExpandedExam] = useState(null);
+  const [examNameMap, setExamNameMap] = useState({});
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
   // track the currently displayed date so we can auto-refresh past midnight
@@ -22,8 +24,18 @@ function HomePage() {
     setLoading(true);
     setError("");
     try {
-      const data = await dashboardService.getSummary();
-      setSummary(data);
+      const [summaryData, examsData] = await Promise.all([
+        dashboardService.getSummary(),
+        examService.getExams(),
+      ]);
+
+      setSummary(summaryData);
+
+      const map = {};
+      examsData.forEach((exam) => {
+        map[String(exam._id)] = exam.name;
+      });
+      setExamNameMap(map);
     } catch (err) {
       setError(err.response?.data?.message || "Unable to load dashboard");
     } finally {
@@ -103,12 +115,17 @@ function HomePage() {
         <div className="space-y-2">
           {Object.entries(
             summary.todayTasks.reduce((acc, task) => {
-              const examId = task.examId || "no-exam";
-              const examName = task.examName || "No Exam";
+              const examId = task.examId ? String(task.examId) : "no-exam";
+              const examName =
+                (examId !== "no-exam" ? examNameMap[examId] : "") ||
+                task.examName?.trim() ||
+                "No Exam";
+
               if (!acc[examId]) {
                 acc[examId] = { examName, tasks: [] };
               }
-              acc[examId].tasks.push(task);
+
+              acc[examId].tasks.push({ ...task, examName });
               return acc;
             }, {})
           ).map(([examId, { examName, tasks }]) => (
@@ -157,4 +174,3 @@ function HomePage() {
 }
 
 export default HomePage;
-

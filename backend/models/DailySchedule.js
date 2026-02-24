@@ -42,6 +42,17 @@ const dailyScheduleSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    examId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Exam",
+      default: null,
+      index: true,
+    },
+    examNameSnapshot: {
+      type: String,
+      default: "No Exam",
+      trim: true,
+    },
     date: {
       type: Date,
       required: true,

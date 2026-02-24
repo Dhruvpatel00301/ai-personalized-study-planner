@@ -161,6 +161,8 @@ const buildSchedulePayload = ({
     return {
       userId,
       subjectId: subject._id,
+      examId: subject.examId?._id || null,
+      examNameSnapshot: subject.examId?.name || "No Exam",
       date: day,
       tasks: uniqueTasks,
       completionPercent: 0,

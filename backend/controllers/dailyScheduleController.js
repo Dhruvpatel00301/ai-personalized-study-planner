@@ -1,5 +1,7 @@
 const DailySchedule = require("../models/DailySchedule");
 const User = require("../models/User");
+const Subject = require("../models/Subject");
+const StudyPlan = require("../models/StudyPlan");
 const { getTodayInTimeZone } = require("../utils/dateTime");
 const { incrementStreakForToday } = require("../utils/streakUtils");
 const { recalculateSubjectSchedule } = require("./studyPlanController");
@@ -35,18 +37,135 @@ const getTodaySchedule = async (req, res, next) => {
     const schedules = await DailySchedule.find({
       userId: req.user._id,
       date: today,
-    }).populate("subjectId", "name");
+    }).lean();
+
+    const subjectIds = schedules.map((schedule) => schedule.subjectId).filter(Boolean);
+
+    const uniqueSubjectIds = Array.from(new Set(subjectIds.map((id) => String(id))));
+
+    const [subjectDocs, studyPlanDocs] = uniqueSubjectIds.length
+      ? await Promise.all([
+          Subject.find({ _id: { $in: uniqueSubjectIds }, userId: req.user._id })
+            .select("_id name examId")
+            .populate("examId", "name")
+            .lean(),
+          StudyPlan.find({
+            userId: req.user._id,
+            subjectId: { $in: uniqueSubjectIds },
+            examId: { $ne: null },
+          })
+            .sort({ generatedAt: -1 })
+            .select("subjectId examId generatedAt")
+            .populate("examId", "name")
+            .lean(),
+        ])
+      : [[], []];
+
+    const studyPlanExamMap = new Map();
+    studyPlanDocs.forEach((plan) => {
+      const key = String(plan.subjectId);
+      if (!studyPlanExamMap.has(key)) {
+        studyPlanExamMap.set(key, {
+          examName: plan.examId?.name || "No Exam",
+          examId: plan.examId?._id ? String(plan.examId._id) : null,
+        });
+      }
+    });
+
+    const subjectsToBackfill = [];
+
+    const subjectMetaMap = new Map(
+      subjectDocs.map((subject) => {
+        const planFallback = studyPlanExamMap.get(String(subject._id));
+        const resolvedExamId = subject.examId?._id
+          ? String(subject.examId._id)
+          : planFallback?.examId || null;
+        const resolvedExamName = subject.examId?.name || planFallback?.examName || "No Exam";
+
+        if (!subject.examId?._id && resolvedExamId) {
+          subjectsToBackfill.push({
+            updateOne: {
+              filter: { _id: subject._id, userId: req.user._id, examId: null },
+              update: { $set: { examId: resolvedExamId } },
+            },
+          });
+        }
+
+        return [
+          String(subject._id),
+          {
+            subjectName: subject.name || "Subject",
+            examName: resolvedExamName,
+            examId: resolvedExamId,
+          },
+        ];
+      })
+    );
+
+    if (subjectsToBackfill.length) {
+      await Subject.bulkWrite(subjectsToBackfill, { ordered: false });
+    }
+
+    const scheduleExamMetaMap = new Map();
+    const scheduleExamBackfills = [];
+
+    schedules.forEach((schedule) => {
+      const subjectId = schedule.subjectId ? String(schedule.subjectId) : null;
+      const subjectMeta = subjectId ? subjectMetaMap.get(subjectId) : null;
+      const planFallback = subjectId ? studyPlanExamMap.get(subjectId) : null;
+
+      const resolvedExamName =
+        subjectMeta?.examName || planFallback?.examName || schedule.examNameSnapshot || "No Exam";
+      const resolvedExamId =
+        subjectMeta?.examId ||
+        planFallback?.examId ||
+        (schedule.examId ? String(schedule.examId) : null);
+
+      scheduleExamMetaMap.set(String(schedule._id), {
+        examName: resolvedExamName,
+        examId: resolvedExamId,
+      });
+
+      if (
+        resolvedExamName !== "No Exam" &&
+        (!schedule.examId || schedule.examNameSnapshot !== resolvedExamName)
+      ) {
+        scheduleExamBackfills.push({
+          updateOne: {
+            filter: { _id: schedule._id, userId: req.user._id },
+            update: {
+              $set: {
+                examId: resolvedExamId,
+                examNameSnapshot: resolvedExamName,
+              },
+            },
+          },
+        });
+      }
+    });
+
+    if (scheduleExamBackfills.length) {
+      await DailySchedule.bulkWrite(scheduleExamBackfills, { ordered: false });
+    }
 
     const todayTasks = schedules.flatMap((schedule) =>
-      schedule.tasks.map((task) => ({
-        taskId: task._id,
-        scheduleId: schedule._id,
-        subjectId: schedule.subjectId?._id,
-        subjectName: schedule.subjectId?.name || "Subject",
-        topicTitle: task.topicTitleSnapshot,
-        taskType: task.taskType,
-        completed: task.completed,
-      }))
+      schedule.tasks.map((task) => {
+        const subjectId = schedule.subjectId ? String(schedule.subjectId) : null;
+        const subjectMeta = subjectId ? subjectMetaMap.get(subjectId) : null;
+        const scheduleExamMeta = scheduleExamMetaMap.get(String(schedule._id));
+
+        return {
+          taskId: task._id,
+          scheduleId: schedule._id,
+          subjectId,
+          subjectName: subjectMeta?.subjectName || "Subject",
+          examName: scheduleExamMeta?.examName || "No Exam",
+          examId: scheduleExamMeta?.examId || null,
+          topicTitle: task.topicTitleSnapshot,
+          taskType: task.taskType,
+          completed: task.completed,
+        };
+      })
     );
 
     return res.json({

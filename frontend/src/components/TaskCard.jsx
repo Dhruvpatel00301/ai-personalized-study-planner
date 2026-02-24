@@ -21,6 +21,11 @@
     <div className={`surface-card p-4 ${colors.border}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
+          {task.examName ? (
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-brand-700">
+              {task.examName}
+            </p>
+          ) : null}
           <p className="text-sm font-semibold text-slate-800">{task.topicTitle}</p>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             <p className="text-xs text-slate-600 font-medium">{task.subjectName}</p>
