@@ -1,5 +1,6 @@
 const DailySchedule = require("../models/DailySchedule");
 const Subject = require("../models/Subject");
+const Topic = require("../models/Topic");
 const User = require("../models/User");
 const { getTodayInTimeZone } = require("../utils/dateTime");
 const { resetStreakIfMissedDays } = require("../utils/streakUtils");
@@ -40,20 +41,34 @@ const getDashboardSummary = async (req, res, next) => {
       shouldSaveUser = true;
     }
 
-    const [todaySchedules, allSchedules, subjectCount] = await Promise.all([
-      DailySchedule.find({ userId: user._id, date: today }).populate("subjectId", "name"),
+    const [todaySchedules, allSchedules, subjectCount, topicsMap] = await Promise.all([
+      DailySchedule.find({ userId: user._id, date: today })
+        .populate("subjectId", "name examId")
+        .populate("subjectId.examId", "name"),
       DailySchedule.find({ userId: user._id }),
       Subject.countDocuments({ userId: user._id, isArchived: false }),
+      Topic.find({ userId: user._id }).select("_id strength").lean(),
     ]);
+
+    // build a map of topicId -> strength for quick lookup
+    const topicStrengthMap = {};
+    topicsMap.forEach((topic) => {
+      topicStrengthMap[topic._id] = topic.strength || "normal";
+    });
 
     const todayTasks = todaySchedules.flatMap((schedule) =>
       schedule.tasks.map((task) => ({
         taskId: task._id,
         scheduleId: schedule._id,
         subjectName: schedule.subjectId?.name || "Subject",
+        subjectId: schedule.subjectId?._id,
+        examName: schedule.subjectId?.examId?.name || "No Exam",
+        examId: schedule.subjectId?.examId?._id,
         topicTitle: task.topicTitleSnapshot,
+        topicId: task.topicId,
         taskType: task.taskType,
         completed: task.completed,
+        strength: topicStrengthMap[task.topicId] || "normal",
       }))
     );
 

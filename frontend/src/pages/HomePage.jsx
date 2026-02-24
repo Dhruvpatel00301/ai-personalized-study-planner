@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
 import ProgressSummaryCard from "../components/ProgressSummaryCard";
-import TaskCard from "../components/TaskCard";
+import ExamTasksGroup from "../components/ExamTasksGroup";
 import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
 import { AI_TIPS } from "../utils/constants";
@@ -12,6 +12,7 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState(null);
   const [error, setError] = useState("");
+  const [expandedExam, setExpandedExam] = useState(null);
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
   // track the currently displayed date so we can auto-refresh past midnight
@@ -95,18 +96,54 @@ function HomePage() {
       </div>
 
       <div className="px-1">
-        <p className="section-title">Today's Tasks</p>
+        <p className="section-title">Today's Tasks by Exam</p>
       </div>
 
       {summary?.todayTasks?.length ? (
-        <div className="space-y-3">
-          {summary.todayTasks.map((task) => (
-            <TaskCard
-              key={task.taskId}
-              task={task}
-              onComplete={handleComplete}
-              disabled={savingTaskId === task.taskId}
-            />
+        <div className="space-y-2">
+          {Object.entries(
+            summary.todayTasks.reduce((acc, task) => {
+              const examId = task.examId || "no-exam";
+              const examName = task.examName || "No Exam";
+              if (!acc[examId]) {
+                acc[examId] = { examName, tasks: [] };
+              }
+              acc[examId].tasks.push(task);
+              return acc;
+            }, {})
+          ).map(([examId, { examName, tasks }]) => (
+            <div key={examId} className="space-y-2">
+              <button
+                onClick={() => setExpandedExam(expandedExam === examId ? null : examId)}
+                className="w-full bg-gradient-to-r from-brand-500 to-brand-600 text-white p-4 rounded-lg flex items-center justify-between hover:shadow-lg transition transform hover:scale-105"
+              >
+                <div className="text-left">
+                  <p className="text-lg font-bold">{examName}</p>
+                  <p className="text-sm text-brand-100">{tasks.length} task{tasks.length !== 1 ? "s" : ""} today</p>
+                </div>
+                <span className={`text-2xl transition transform ${expandedExam === examId ? "rotate-180" : ""}`}>
+                  ▼
+                </span>
+              </button>
+
+              {expandedExam === examId && (
+                <div className="space-y-2">
+                  {tasks.map((task) => (
+                    <ExamTasksGroup
+                      key={task.taskId}
+                      examId={examId}
+                      examName={examName}
+                      tasks={[task]}
+                      onComplete={handleComplete}
+                      savingTaskId={savingTaskId}
+                      disabled={false}
+                      hideHeader={true}
+                      hideStrengthLabel={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       ) : (
