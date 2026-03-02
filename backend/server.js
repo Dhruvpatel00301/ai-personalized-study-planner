@@ -18,20 +18,32 @@ const authLimiter = rateLimit({
 });
 
 app.use(helmet());
-// allow CORS from the configured client URL(s) and localhost during development
-// CLIENT_URL can be a comma-separated list of origins (production & dev). If it's
-// missing we still add the common localhost dev URL so the server never throws.
+
+const normalizeOrigin = (value) => {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return value.trim();
+  }
+};
+
+// CLIENT_URL supports comma-separated origins.
+// Example: https://your-app.vercel.app,http://localhost:5173
 const rawOrigins = process.env.CLIENT_URL || "";
 const allowedOrigins = rawOrigins
   .split(",")
   .map((u) => u.trim())
   .filter(Boolean)
-  .concat("http://localhost:5173");
+  .map(normalizeOrigin);
+
+const isLocalDevOrigin = (origin) =>
+  /^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin);
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow server-to-server requests (no origin) or any allowed origin
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow server-to-server/no-origin requests, configured origins, and localhost dev ports.
+      if (!origin || allowedOrigins.includes(origin) || isLocalDevOrigin(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS policy: origin ${origin} not allowed`));
