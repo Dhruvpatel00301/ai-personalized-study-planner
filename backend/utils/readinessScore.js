@@ -1,6 +1,8 @@
-const computeReadinessScore = ({ completion, weakCoverage, streakConsistency }) => {
-  const readiness = completion * 0.5 + weakCoverage * 0.3 + streakConsistency * 0.2;
-  return Math.max(0, Math.min(100, Math.round(readiness)));
+const clampPercent = (value) => Math.max(0, Math.min(100, Math.round(value)));
+
+const computeReadinessScore = ({ concept, practice, consistency }) => {
+  const readiness = concept * 0.4 + practice * 0.35 + consistency * 0.25;
+  return clampPercent(readiness);
 };
 
 module.exports = computeReadinessScore;
