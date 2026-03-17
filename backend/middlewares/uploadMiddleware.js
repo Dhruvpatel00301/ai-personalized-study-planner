@@ -17,7 +17,16 @@ const uploadProfileImage = multer({
   },
 }).single("image");
 
+const uploadSessionProof = multer({
+  storage,
+  fileFilter: imageFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+}).single("proof");
+
 module.exports = {
   uploadProfileImage,
+  uploadSessionProof,
 };
 

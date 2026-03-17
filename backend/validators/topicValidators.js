@@ -6,10 +6,6 @@ const createTopicValidation = [
     .optional()
     .isIn(["weak", "normal", "strong"])
     .withMessage("Strength must be weak, normal, or strong"),
-  body("estimatedMinutes")
-    .optional()
-    .isInt({ min: 10 })
-    .withMessage("Estimated minutes must be at least 10"),
 ];
 
 const updateTopicValidation = [
@@ -18,10 +14,6 @@ const updateTopicValidation = [
     .optional()
     .isIn(["weak", "normal", "strong"])
     .withMessage("Strength must be weak, normal, or strong"),
-  body("estimatedMinutes")
-    .optional()
-    .isInt({ min: 10 })
-    .withMessage("Estimated minutes must be at least 10"),
   body("isCompleted").optional().isBoolean(),
 ];
 

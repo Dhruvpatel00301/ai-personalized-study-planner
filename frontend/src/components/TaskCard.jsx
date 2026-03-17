@@ -1,5 +1,6 @@
-﻿function TaskCard({ task, onComplete, disabled, hideStrengthLabel }) {
-  // map strength to border color with strong visible colors
+import { useEffect, useRef, useState } from "react";
+
+function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUploadProof }) {
   const strengthColors = {
     weak: {
       border: "border-l-4 border-l-red-600",
@@ -16,10 +17,236 @@
   };
 
   const colors = strengthColors[task.strength] || strengthColors.normal;
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [startAt, setStartAt] = useState(null);
+  const [proofUrl, setProofUrl] = useState("");
+  const [proofFile, setProofFile] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedElapsed, setSavedElapsed] = useState(0);
+  const [savedProofUrl, setSavedProofUrl] = useState("");
+  const [hasAutoCompleted, setHasAutoCompleted] = useState(false);
+  const [savedSessionId, setSavedSessionId] = useState("");
+  const fileInputRef = useRef(null);
+  const storageKey = `taskTimer:${task.taskId}`;
+
+  const persistState = (next) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // ignore storage write errors
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (typeof data.elapsedSeconds === "number") {
+          setElapsedSeconds(data.elapsedSeconds);
+        }
+        if (typeof data.startAt === "number") {
+          setStartAt(data.startAt);
+        }
+        if (typeof data.isRunning === "boolean") {
+          setIsRunning(data.isRunning);
+        }
+        if (typeof data.isSaved === "boolean") {
+          setIsSaved(data.isSaved);
+        }
+        if (typeof data.savedElapsed === "number") {
+          setSavedElapsed(data.savedElapsed);
+        }
+        if (typeof data.savedSessionId === "string") {
+          setSavedSessionId(data.savedSessionId);
+        }
+        if (data.isRunning && typeof data.startAt === "number") {
+          const seconds = Math.max(0, Math.floor((Date.now() - data.startAt) / 1000));
+          setElapsedSeconds(seconds);
+        }
+      }
+    } catch {
+      // ignore storage parse errors
+    } finally {
+      // no-op
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!isRunning || !startAt) return undefined;
+
+    const interval = setInterval(() => {
+      const seconds = Math.max(0, Math.floor((Date.now() - startAt) / 1000));
+      setElapsedSeconds(seconds);
+      persistState({
+        isRunning: true,
+        startAt,
+        elapsedSeconds: seconds,
+        isSaved,
+        savedElapsed,
+        savedSessionId,
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRunning, startAt, isSaved, savedElapsed]);
+
+  // persist during active ticking to survive unmounts
+
+  useEffect(() => {
+    return () => {
+      if (proofUrl) {
+        URL.revokeObjectURL(proofUrl);
+      }
+      if (savedProofUrl) {
+        URL.revokeObjectURL(savedProofUrl);
+      }
+    };
+  }, [proofUrl, savedProofUrl]);
+
+  const formatElapsed = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
+
+  const toggleTimer = () => {
+    if (isRunning) {
+      setIsRunning(false);
+      persistState({
+        isRunning: false,
+        startAt,
+        elapsedSeconds,
+        isSaved,
+        savedElapsed,
+        savedSessionId,
+      });
+      try {
+        const active = localStorage.getItem(activeKey);
+        if (active === String(task.taskId)) {
+          localStorage.removeItem(activeKey);
+        }
+      } catch {
+        // ignore storage errors
+      }
+      return;
+    }
+    try {
+      const active = localStorage.getItem(activeKey);
+      if (active && active !== String(task.taskId)) {
+        return;
+      }
+      localStorage.setItem(activeKey, String(task.taskId));
+    } catch {
+      // ignore storage errors
+    }
+    const nextStart = Date.now() - elapsedSeconds * 1000;
+    setStartAt(nextStart);
+    setIsRunning(true);
+    persistState({
+      isRunning: true,
+      startAt: nextStart,
+      elapsedSeconds,
+      isSaved,
+      savedElapsed,
+      savedSessionId,
+    });
+  };
+
+  const handleAddScreenshot = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (proofUrl) {
+      URL.revokeObjectURL(proofUrl);
+    }
+    const nextUrl = URL.createObjectURL(file);
+    setProofUrl(nextUrl);
+    setProofFile(file);
+    if (isSaved) {
+      if (savedProofUrl) {
+        URL.revokeObjectURL(savedProofUrl);
+      }
+      setSavedProofUrl(nextUrl);
+      if (savedSessionId && onUploadProof) {
+        onUploadProof({ sessionId: savedSessionId, proofFile: file })
+          .then(() => {
+            if (onComplete && !task.completed && !hasAutoCompleted) {
+              setHasAutoCompleted(true);
+              onComplete(task.taskId);
+            }
+          })
+          .catch(() => {
+            // ignore upload errors here; HomePage will surface errors
+          });
+      } else if (onComplete && !task.completed && !hasAutoCompleted) {
+        setHasAutoCompleted(true);
+        onComplete(task.taskId);
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (isRunning) {
+      setIsRunning(false);
+    }
+    setSavedElapsed(elapsedSeconds);
+    setSavedProofUrl(proofUrl || "");
+    setIsSaved(true);
+    if (onSave) {
+      try {
+        const result = await onSave({
+          topicId: task.topicId,
+          durationSeconds: Math.max(1, elapsedSeconds),
+          startedAt: startAt ? new Date(startAt).toISOString() : null,
+          proofFile,
+        });
+        if (result?.id) {
+          setSavedSessionId(result.id);
+          persistState({
+            isRunning: false,
+            startAt,
+            elapsedSeconds,
+            isSaved: true,
+            savedElapsed: elapsedSeconds,
+            savedSessionId: result.id,
+          });
+        }
+        if (proofFile && onComplete && !task.completed && !hasAutoCompleted) {
+          setHasAutoCompleted(true);
+          onComplete(task.taskId);
+        }
+      } catch {
+        // keep UI responsive even if save fails
+      }
+    }
+    persistState({
+      isRunning: false,
+      startAt,
+      elapsedSeconds,
+      isSaved: true,
+      savedElapsed: elapsedSeconds,
+      savedSessionId,
+    });
+    try {
+      const active = localStorage.getItem(activeKey);
+      if (active === String(task.taskId)) {
+        localStorage.removeItem(activeKey);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   return (
     <div className={`surface-card p-4 ${colors.border}`}>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           {task.examName ? (
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-brand-700">
@@ -33,26 +260,66 @@
               {task.taskType}
             </span>
             {!hideStrengthLabel && (
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badge}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badge}`}
+              >
                 {task.strength}
               </span>
             )}
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={task.completed || disabled}
-          onClick={() => onComplete(task.taskId)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition whitespace-nowrap ${
-            task.completed
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-brand-500 text-white shadow disabled:cursor-not-allowed disabled:opacity-50"
-          }`}
-        >
-          {task.completed ? "Done" : "Complete"}
-        </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            disabled={disabled || isSaved}
+            onClick={toggleTimer}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              isRunning ? "bg-emerald-100 text-emerald-700" : "bg-brand-500 text-white"
+            }`}
+          >
+            {isRunning ? "Stop Timer" : "Start Timer"}
+          </button>
+          <button
+            type="button"
+            disabled={disabled || isSaved}
+            onClick={handleSave}
+            className="rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaved ? "Saved" : "Save"}
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={handleAddScreenshot}
+            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+          >
+            Screenshot
+          </button>
+        </div>
+
+        <span className="text-xs font-semibold text-slate-600">
+          {formatElapsed(isSaved ? savedElapsed : elapsedSeconds)}
+        </span>
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      {(isSaved ? savedProofUrl : proofUrl) ? (
+        <div className="mt-3">
+          <img
+            src={isSaved ? savedProofUrl : proofUrl}
+            alt="Session proof"
+            className="h-20 w-20 rounded-lg object-cover border border-slate-200"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -12,7 +12,7 @@ function SubjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState("");
   const [error, setError] = useState("");
-  const [topicForm, setTopicForm] = useState({ title: "", strength: "normal", estimatedMinutes: 45 });
+  const [topicForm, setTopicForm] = useState({ title: "", strength: "normal" });
 
   const strengthStats = useMemo(() => {
     return topics.reduce(
@@ -60,11 +60,8 @@ function SubjectDetailPage() {
     }
 
     try {
-      await subjectService.createTopic(subjectId, {
-        ...topicForm,
-        estimatedMinutes: Number(topicForm.estimatedMinutes),
-      });
-      setTopicForm({ title: "", strength: "normal", estimatedMinutes: 45 });
+      await subjectService.createTopic(subjectId, topicForm);
+      setTopicForm({ title: "", strength: "normal" });
       await loadData();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to add topic");
@@ -144,13 +141,6 @@ function SubjectDetailPage() {
               </option>
             ))}
           </select>
-          <input
-            className="field-input"
-            type="number"
-            min="10"
-            value={topicForm.estimatedMinutes}
-            onChange={(e) => setTopicForm((prev) => ({ ...prev, estimatedMinutes: e.target.value }))}
-          />
         </div>
         <button type="submit" className="btn-primary mt-3">
           Add Topic
@@ -174,9 +164,7 @@ function SubjectDetailPage() {
           <div key={topic._id} className="surface-card flex items-center justify-between p-3">
             <div>
               <p className="text-sm font-semibold text-slate-800">{topic.title}</p>
-              <p className="text-xs text-slate-500">
-                {topic.strength} - {topic.estimatedMinutes} mins
-              </p>
+              <p className="text-xs text-slate-500">{topic.strength}</p>
             </div>
             <button type="button" onClick={() => removeTopic(topic._id)} className="btn-danger-soft">
               Remove

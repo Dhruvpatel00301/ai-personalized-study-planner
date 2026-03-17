@@ -37,7 +37,6 @@ const createTopic = async (req, res, next) => {
       subjectId: subject._id,
       title: req.body.title,
       strength: req.body.strength || "normal",
-      estimatedMinutes: req.body.estimatedMinutes || 45,
     });
 
     return res.status(201).json({ success: true, data: topic });

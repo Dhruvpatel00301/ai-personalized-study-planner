@@ -74,7 +74,11 @@ const buildWeightedQueue = (topics, nonRevisionDays, missedTopicIds = []) => {
     }
   }
 
-  queue.sort((a, b) => (WEIGHT_MAP[b.strength] || 1) - (WEIGHT_MAP[a.strength] || 1));
+  // Shuffle to spread repeated topics across days while keeping weighting by frequency.
+  for (let i = queue.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
   return queue;
 };
 
@@ -107,6 +111,7 @@ const buildSchedulePayload = ({
 
   // Keep daily load balanced by distributing weighted topic units across all study days.
   const tasksPerStudyDay = Math.max(1, Math.ceil(weightedQueue.length / Math.max(1, nonRevisionDays)));
+  const dailyTarget = Math.min(topics.length, Math.max(2, tasksPerStudyDay));
   let queuePointer = 0;
   const history = [];
 
@@ -131,10 +136,17 @@ const buildSchedulePayload = ({
         });
       }
     } else {
-      for (let i = 0; i < tasksPerStudyDay; i += 1) {
+      const seen = new Set();
+      const limit = weightedQueue.length * 2;
+      let attempts = 0;
+
+      while (tasks.length < dailyTarget && attempts < limit) {
         const topic = weightedQueue[queuePointer % weightedQueue.length];
         queuePointer += 1;
-
+        attempts += 1;
+        const key = String(topic._id);
+        if (seen.has(key)) continue;
+        seen.add(key);
         tasks.push({
           topicId: topic._id,
           topicTitleSnapshot: topic.title,

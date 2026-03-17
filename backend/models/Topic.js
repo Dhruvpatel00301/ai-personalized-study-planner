@@ -24,11 +24,6 @@ const topicSchema = new mongoose.Schema(
       enum: ["weak", "normal", "strong"],
       default: "normal",
     },
-    estimatedMinutes: {
-      type: Number,
-      default: 45,
-      min: 10,
-    },
     isCompleted: {
       type: Boolean,
       default: false,

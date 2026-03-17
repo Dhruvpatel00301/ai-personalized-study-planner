@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
 import examService from "../services/examService";
+import studySessionService from "../services/studySessionService";
 import ProgressSummaryCard from "../components/ProgressSummaryCard";
 import ExamTasksGroup from "../components/ExamTasksGroup";
 import Loader from "../components/Loader";
@@ -85,6 +86,30 @@ function HomePage() {
     }
   };
 
+  const handleSaveSession = async ({ topicId, durationSeconds, startedAt, proofFile }) => {
+    setError("");
+    try {
+      return await studySessionService.saveSession({
+        topicId,
+        durationSeconds,
+        startedAt,
+        proofFile,
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to save study session");
+      return null;
+    }
+  };
+
+  const handleUploadProof = async ({ sessionId, proofFile }) => {
+    setError("");
+    try {
+      await studySessionService.uploadProof(sessionId, proofFile);
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to upload screenshot");
+    }
+  };
+
   if (loading) return <Loader label="Loading dashboard..." />;
 
   return (
@@ -111,10 +136,12 @@ function HomePage() {
         <p className="section-title">Today's Tasks by Exam</p>
       </div>
 
-      {summary?.todayTasks?.length ? (
+      {summary?.todayTasks?.filter((task) => !task.completed).length ? (
         <div className="space-y-2">
           {Object.entries(
-            summary.todayTasks.reduce((acc, task) => {
+            summary.todayTasks
+              .filter((task) => !task.completed)
+              .reduce((acc, task) => {
               const examId = task.examId ? String(task.examId) : "no-exam";
               const examName =
                 (examId !== "no-exam" ? examNameMap[examId] : "") ||
@@ -152,6 +179,8 @@ function HomePage() {
                       examName={examName}
                       tasks={[task]}
                       onComplete={handleComplete}
+                      onSave={handleSaveSession}
+                      onUploadProof={handleUploadProof}
                       savingTaskId={savingTaskId}
                       disabled={false}
                       hideHeader={true}

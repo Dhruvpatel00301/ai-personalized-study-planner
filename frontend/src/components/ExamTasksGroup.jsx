@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TaskCard from "./TaskCard";
 
-function ExamTasksGroup({ examName, examId, tasks, onComplete, savingTaskId, disabled, hideHeader, hideStrengthLabel }) {
+function ExamTasksGroup({ examName, examId, tasks, onComplete, onSave, onUploadProof, savingTaskId, disabled, hideHeader, hideStrengthLabel }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (hideHeader) {
@@ -13,6 +13,8 @@ function ExamTasksGroup({ examName, examId, tasks, onComplete, savingTaskId, dis
             key={task.taskId}
             task={task}
             onComplete={onComplete}
+            onSave={onSave}
+            onUploadProof={onUploadProof}
             disabled={savingTaskId === task.taskId || disabled}
             hideStrengthLabel={hideStrengthLabel}
           />
@@ -41,6 +43,8 @@ function ExamTasksGroup({ examName, examId, tasks, onComplete, savingTaskId, dis
               key={task.taskId}
               task={task}
               onComplete={onComplete}
+              onSave={onSave}
+              onUploadProof={onUploadProof}
               disabled={savingTaskId === task.taskId || disabled}
               hideStrengthLabel={hideStrengthLabel}
             />
