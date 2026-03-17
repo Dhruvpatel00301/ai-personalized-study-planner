@@ -6,6 +6,7 @@ import ProgressSummaryCard from "../components/ProgressSummaryCard";
 import ExamTasksGroup from "../components/ExamTasksGroup";
 import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
+import Toast from "../components/Toast";
 import { AI_TIPS } from "../utils/constants";
 import { todayLabel } from "../utils/dateUtils";
 
@@ -14,6 +15,7 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState(null);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
   const [expandedExam, setExpandedExam] = useState(null);
   const [examNameMap, setExamNameMap] = useState({});
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
@@ -89,14 +91,22 @@ function HomePage() {
   const handleSaveSession = async ({ topicId, durationSeconds, startedAt, proofFile }) => {
     setError("");
     try {
-      return await studySessionService.saveSession({
+      const result = await studySessionService.saveSession({
         topicId,
         durationSeconds,
         startedAt,
         proofFile,
       });
+      if (proofFile) {
+        setToast({ type: "success", message: "Screenshot uploaded" });
+      }
+      return result;
     } catch (err) {
-      setError(err.response?.data?.message || "Unable to save study session");
+      const message = err.response?.data?.message || "Unable to save study session";
+      setError(message);
+      if (proofFile) {
+        setToast({ type: "error", message: "Upload failed" });
+      }
       return null;
     }
   };
@@ -105,8 +115,10 @@ function HomePage() {
     setError("");
     try {
       await studySessionService.uploadProof(sessionId, proofFile);
+      setToast({ type: "success", message: "Screenshot uploaded" });
     } catch (err) {
       setError(err.response?.data?.message || "Unable to upload screenshot");
+      setToast({ type: "error", message: "Upload failed" });
     }
   };
 
@@ -114,6 +126,7 @@ function HomePage() {
 
   return (
     <div className="space-y-4">
+      {toast ? <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} /> : null}
       {error ? <p className="status-error">{error}</p> : null}
 
       <ProgressSummaryCard

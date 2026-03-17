@@ -29,6 +29,7 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
   const [savedSessionId, setSavedSessionId] = useState("");
   const fileInputRef = useRef(null);
   const storageKey = `taskTimer:${task.taskId}`;
+  const activeKey = "activeTaskTimer";
 
   const persistState = (next) => {
     try {
