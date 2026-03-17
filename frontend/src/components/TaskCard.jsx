@@ -185,9 +185,6 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
           .catch(() => {
             // ignore upload errors here; HomePage will surface errors
           });
-      } else if (onComplete && !task.completed && !hasAutoCompleted) {
-        setHasAutoCompleted(true);
-        onComplete(task.taskId);
       }
     }
   };
@@ -218,7 +215,7 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
             savedSessionId: result.id,
           });
         }
-        if (proofFile && onComplete && !task.completed && !hasAutoCompleted) {
+        if (proofFile && result?.proofImageUrl && onComplete && !task.completed && !hasAutoCompleted) {
           setHasAutoCompleted(true);
           onComplete(task.taskId);
         }
