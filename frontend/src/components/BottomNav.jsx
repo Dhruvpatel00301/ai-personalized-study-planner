@@ -1,4 +1,4 @@
-﻿import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../utils/constants";
 
 function BottomNav() {
@@ -24,4 +24,3 @@ function BottomNav() {
 }
 
 export default BottomNav;
-

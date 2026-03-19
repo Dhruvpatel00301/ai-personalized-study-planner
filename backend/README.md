@@ -26,5 +26,7 @@
 - Uses MongoDB Atlas via `MONGO_URI`.
 - Cron job checks every 15 minutes and sends reminders at each user's local 7:00 PM.
 - Missed tasks are auto-carried when schedule recalculation runs.
+- Study Coach supports Groq (set `GROQ_API_KEY`) and OpenAI (set `OPENAI_API_KEY`). Groq is used first if configured.
+- You can override models with `GROQ_MODEL` or `OPENAI_MODEL`.
 
-> **Migration note:** starting 2026‑02‑24 the backend enforces unique topic titles per user & subject.  A compound unique index (`userId, subjectId, title`) with case‑insensitive collation was added.  Before deploying, ensure there are no duplicate topics for the same subject (remove or rename them) or the server will fail with duplicate key errors.
+> **Migration note:** starting 2026-02-24 the backend enforces unique topic titles per user & subject. A compound unique index (`userId, subjectId, title`) with case-insensitive collation was added. Before deploying, ensure there are no duplicate topics for the same subject (remove or rename them) or the server will fail with duplicate key errors.

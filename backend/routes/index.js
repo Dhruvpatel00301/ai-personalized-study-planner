@@ -9,6 +9,7 @@ const analyticsRoutes = require("./analyticsRoutes");
 const profileRoutes = require("./profileRoutes");
 const examRoutes = require("./examRoutes");
 const studySessionRoutes = require("./studySessionRoutes");
+const coachRoutes = require("./coachRoutes");
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use("/analytics", analyticsRoutes);
 router.use("/profile", profileRoutes);
 router.use("/exams", examRoutes);
 router.use("/study-sessions", studySessionRoutes);
+router.use("/coach", coachRoutes);
 
 module.exports = router;

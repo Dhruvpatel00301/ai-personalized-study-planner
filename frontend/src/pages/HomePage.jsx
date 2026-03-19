@@ -211,6 +211,7 @@ function HomePage() {
           description="Generate a study plan by adding subjects under an exam to start your schedule."
         />
       )}
+
     </div>
   );
 }
