@@ -18,6 +18,7 @@ function HomePage() {
   const [toast, setToast] = useState(null);
   const [expandedExam, setExpandedExam] = useState(null);
   const [examNameMap, setExamNameMap] = useState({});
+  const [taskView, setTaskView] = useState("remaining");
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
   // track the currently displayed date so we can auto-refresh past midnight
@@ -146,44 +147,138 @@ function HomePage() {
       </div>
 
       <div className="px-1">
-        <p className="section-title">Today's Tasks by Exam</p>
+        <p className="section-title">Today's Tasks</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setTaskView("remaining")}
+            className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+              taskView === "remaining"
+                ? "bg-brand-500 text-white shadow"
+                : "bg-white/80 text-slate-600 hover:bg-white"
+            }`}
+          >
+            Remaining
+          </button>
+          <button
+            type="button"
+            onClick={() => setTaskView("completed")}
+            className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+              taskView === "completed"
+                ? "bg-emerald-500 text-white shadow"
+                : "bg-white/80 text-slate-600 hover:bg-white"
+            }`}
+          >
+            Completed
+          </button>
+        </div>
       </div>
 
-      {summary?.todayTasks?.filter((task) => !task.completed).length ? (
+      {taskView === "remaining" ? (
+        summary?.todayTasks?.filter((task) => !task.completed).length ? (
+          <div className="space-y-2">
+            {Object.entries(
+              summary.todayTasks
+                .filter((task) => !task.completed)
+                .reduce((acc, task) => {
+                  const examId = task.examId ? String(task.examId) : "no-exam";
+                  const examName =
+                    (examId !== "no-exam" ? examNameMap[examId] : "") ||
+                    task.examName?.trim() ||
+                    "No Exam";
+
+                  if (!acc[examId]) {
+                    acc[examId] = { examName, tasks: [] };
+                  }
+
+                  acc[examId].tasks.push({ ...task, examName });
+                  return acc;
+                }, {})
+            ).map(([examId, { examName, tasks }]) => (
+              <div key={examId} className="space-y-2">
+                <button
+                  onClick={() => setExpandedExam(expandedExam === examId ? null : examId)}
+                  className="w-full bg-gradient-to-r from-brand-500 to-brand-600 text-white p-4 rounded-lg flex items-center justify-between hover:shadow-lg transition transform hover:scale-105"
+                >
+                  <div className="text-left">
+                    <p className="text-lg font-bold">{examName}</p>
+                    <p className="text-sm text-brand-100">
+                      {tasks.length} task{tasks.length !== 1 ? "s" : ""} today
+                    </p>
+                  </div>
+                  <span className={`text-2xl transition transform ${expandedExam === examId ? "rotate-180" : ""}`}>
+                    ▼
+                  </span>
+                </button>
+
+                {expandedExam === examId && (
+                  <div className="space-y-2">
+                    {tasks.map((task) => (
+                      <ExamTasksGroup
+                        key={task.taskId}
+                        examId={examId}
+                        examName={examName}
+                        tasks={[task]}
+                        onComplete={handleComplete}
+                        onSave={handleSaveSession}
+                        onUploadProof={handleUploadProof}
+                        savingTaskId={savingTaskId}
+                        disabled={false}
+                        hideHeader={true}
+                        hideStrengthLabel={true}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="No remaining tasks" description="You're all caught up for today." />
+        )
+      ) : summary?.todayTasks?.filter((task) => task.completed).length ? (
         <div className="space-y-2">
           {Object.entries(
             summary.todayTasks
-              .filter((task) => !task.completed)
+              .filter((task) => task.completed)
               .reduce((acc, task) => {
-              const examId = task.examId ? String(task.examId) : "no-exam";
-              const examName =
-                (examId !== "no-exam" ? examNameMap[examId] : "") ||
-                task.examName?.trim() ||
-                "No Exam";
+                const examId = task.examId ? String(task.examId) : "no-exam";
+                const examName =
+                  (examId !== "no-exam" ? examNameMap[examId] : "") ||
+                  task.examName?.trim() ||
+                  "No Exam";
 
-              if (!acc[examId]) {
-                acc[examId] = { examName, tasks: [] };
-              }
+                if (!acc[examId]) {
+                  acc[examId] = { examName, tasks: [] };
+                }
 
-              acc[examId].tasks.push({ ...task, examName });
-              return acc;
-            }, {})
+                acc[examId].tasks.push({ ...task, examName });
+                return acc;
+              }, {})
           ).map(([examId, { examName, tasks }]) => (
-            <div key={examId} className="space-y-2">
+            <div key={`completed-${examId}`} className="space-y-2">
               <button
-                onClick={() => setExpandedExam(expandedExam === examId ? null : examId)}
-                className="w-full bg-gradient-to-r from-brand-500 to-brand-600 text-white p-4 rounded-lg flex items-center justify-between hover:shadow-lg transition transform hover:scale-105"
+                onClick={() =>
+                  setExpandedExam(expandedExam === `completed-${examId}` ? null : `completed-${examId}`)
+                }
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-lg flex items-center justify-between hover:shadow-lg transition transform hover:scale-105"
               >
                 <div className="text-left">
                   <p className="text-lg font-bold">{examName}</p>
-                  <p className="text-sm text-brand-100">{tasks.length} task{tasks.length !== 1 ? "s" : ""} today</p>
+                  <p className="text-sm text-emerald-100">
+                    {tasks.length} task{tasks.length !== 1 ? "s" : ""} completed
+                  </p>
                 </div>
-                <span className={`text-2xl transition transform ${expandedExam === examId ? "rotate-180" : ""}`}>
+                <span
+                  className={`text-2xl transition transform ${
+                    expandedExam === `completed-${examId}` ? "rotate-180" : ""
+                  }`}
+                >
                   ▼
                 </span>
               </button>
 
-              {expandedExam === examId && (
+              {expandedExam === `completed-${examId}` && (
                 <div className="space-y-2">
                   {tasks.map((task) => (
                     <ExamTasksGroup
@@ -195,7 +290,7 @@ function HomePage() {
                       onSave={handleSaveSession}
                       onUploadProof={handleUploadProof}
                       savingTaskId={savingTaskId}
-                      disabled={false}
+                      disabled={true}
                       hideHeader={true}
                       hideStrengthLabel={true}
                     />
@@ -207,8 +302,8 @@ function HomePage() {
         </div>
       ) : (
         <EmptyState
-          title="No tasks for today"
-          description="Generate a study plan by adding subjects under an exam to start your schedule."
+          title="No completed tasks yet"
+          description="Finish a task by saving time and uploading a screenshot."
         />
       )}
 

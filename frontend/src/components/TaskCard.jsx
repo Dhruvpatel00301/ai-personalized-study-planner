@@ -78,6 +78,16 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
     if (!isRunning || !startAt) return undefined;
 
     const interval = setInterval(() => {
+      try {
+        const active = localStorage.getItem(activeKey);
+        if (active && active !== String(task.taskId)) {
+          setIsRunning(false);
+          return;
+        }
+      } catch {
+        // ignore storage errors
+      }
+
       const seconds = Math.max(0, Math.floor((Date.now() - startAt) / 1000));
       setElapsedSeconds(seconds);
       persistState({
@@ -91,7 +101,8 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, startAt, isSaved, savedElapsed]);
+  }, [isRunning, startAt, isSaved, savedElapsed, task.taskId]);
+
 
   // persist during active ticking to survive unmounts
 
@@ -134,6 +145,22 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
       }
       return;
     }
+    if (isSaved) {
+      setIsSaved(false);
+      setSavedElapsed(0);
+      setSavedSessionId("");
+      setHasAutoCompleted(false);
+      setSavedProofUrl("");
+      setElapsedSeconds(0);
+      if (proofUrl) {
+        URL.revokeObjectURL(proofUrl);
+      }
+      if (savedProofUrl) {
+        URL.revokeObjectURL(savedProofUrl);
+      }
+      setProofFile(null);
+      setProofUrl("");
+    }
     try {
       const active = localStorage.getItem(activeKey);
       if (active && active !== String(task.taskId)) {
@@ -143,16 +170,16 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
     } catch {
       // ignore storage errors
     }
-    const nextStart = Date.now() - elapsedSeconds * 1000;
+    const nextStart = Date.now() - (isSaved ? 0 : elapsedSeconds) * 1000;
     setStartAt(nextStart);
     setIsRunning(true);
     persistState({
       isRunning: true,
       startAt: nextStart,
       elapsedSeconds,
-      isSaved,
-      savedElapsed,
-      savedSessionId,
+      isSaved: false,
+      savedElapsed: 0,
+      savedSessionId: "",
     });
   };
 
@@ -215,10 +242,7 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
             savedSessionId: result.id,
           });
         }
-        if (proofFile && result?.proofImageUrl && onComplete && !task.completed && !hasAutoCompleted) {
-          setHasAutoCompleted(true);
-          onComplete(task.taskId);
-        }
+        // do not auto-complete on save; completion happens after screenshot upload
       } catch {
         // keep UI responsive even if save fails
       }
@@ -269,34 +293,36 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
 
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            disabled={disabled || isSaved}
-            onClick={toggleTimer}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              isRunning ? "bg-emerald-100 text-emerald-700" : "bg-brand-500 text-white"
-            }`}
-          >
-            {isRunning ? "Stop Timer" : "Start Timer"}
-          </button>
-          <button
-            type="button"
-            disabled={disabled || isSaved}
-            onClick={handleSave}
-            className="rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaved ? "Saved" : "Save"}
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={handleAddScreenshot}
-            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-          >
-            Screenshot
-          </button>
-        </div>
+        {disabled ? null : (
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={toggleTimer}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                isRunning ? "bg-emerald-100 text-emerald-700" : "bg-brand-500 text-white"
+              }`}
+            >
+              {isRunning ? "Stop Timer" : "Start Timer"}
+            </button>
+            <button
+              type="button"
+              disabled={disabled || isSaved}
+              onClick={handleSave}
+              className="rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSaved ? "Saved" : "Save"}
+            </button>
+            <button
+              type="button"
+              disabled={disabled || !isSaved}
+              onClick={handleAddScreenshot}
+              className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Screenshot
+            </button>
+          </div>
+        )}
 
         <span className="text-xs font-semibold text-slate-600">
           {formatElapsed(isSaved ? savedElapsed : elapsedSeconds)}

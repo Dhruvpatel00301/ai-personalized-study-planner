@@ -26,6 +26,16 @@ const studySessionService = {
     });
     return data.data;
   },
+
+  async getEvidence({ subjectId, from, to }) {
+    const params = new URLSearchParams();
+    if (subjectId) params.append("subjectId", subjectId);
+    if (from) params.append("from", from);
+    if (to) params.append("to", to);
+    const query = params.toString();
+    const { data } = await api.get(`/study-sessions${query ? `?${query}` : ""}`);
+    return data.data;
+  },
 };
 
 export default studySessionService;

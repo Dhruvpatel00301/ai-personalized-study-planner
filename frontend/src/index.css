@@ -20,6 +20,11 @@ body {
     radial-gradient(100% 80% at 90% -10%, #dceeff 0%, rgba(220, 238, 255, 0) 65%),
     linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%);
   color: var(--ink-main);
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 * {
@@ -30,22 +35,17 @@ body {
   background: rgba(52, 142, 248, 0.22);
 }
 
-.mobile-app {
+.app-shell {
   max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
+  width: 100%;
   background: transparent;
+  overflow-x: hidden;
 }
 
-.desktop-only-message {
-  display: none;
-  min-height: 100vh;
-  padding: 2rem;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  color: #12314f;
-  font-weight: 600;
+.desktop-shell {
+  width: 100%;
 }
 
 @layer components {
@@ -93,16 +93,78 @@ body {
   .status-success {
     @apply rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700;
   }
+
+  .chat-bubble {
+    @apply shadow-sm;
+    animation: chat-fade-in 0.2s ease-out;
+  }
+
+  .chat-bubble-user {
+    @apply bg-brand-500 text-white;
+  }
+
+  .chat-bubble-assistant {
+    @apply bg-white/80 text-slate-700;
+  }
+
+  .typing-dots {
+    @apply flex items-center gap-1;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(100, 116, 139, 0.9);
+    animation: typing-bounce 1s infinite;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
+  }
 }
 
 @media (min-width: 769px) {
-  /* Enforce mobile-only experience by hiding app UI on larger screens. */
-  .mobile-app {
-    display: none !important;
+  .app-shell {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
   }
 
-  .desktop-only-message {
-    display: flex !important;
+  .desktop-shell {
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+@keyframes chat-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes typing-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
   }
 }
 

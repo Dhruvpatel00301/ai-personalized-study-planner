@@ -52,6 +52,27 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    coachHistory: {
+      type: [
+        {
+          role: {
+            type: String,
+            enum: ["user", "assistant"],
+            required: true,
+          },
+          text: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

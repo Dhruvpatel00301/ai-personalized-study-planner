@@ -102,8 +102,8 @@ const respondToMessage = async (user, message) => {
       return "Stick to today's tasks first, then review weak topics. If you miss a day, recalculate your plan.";
     }
 
-    return "I can help with today's tasks, weak topics, or study plan. Try: \"What should I study today?\"";
-  }
+      return "I can help with today's tasks, weak topics, or study plan. Try: \"What should I study today?\"";
+    }
 
   const contextLines = [
     `Date: ${todaySummary.date}`,
@@ -184,7 +184,29 @@ const chatWithCoach = async (req, res, next) => {
   try {
     const { message } = req.body;
     const reply = await respondToMessage(req.user, message);
+    const trimmed = (message || "").trim();
+
+    if (trimmed) {
+      const updatedHistory = [
+        ...(req.user.coachHistory || []),
+        { role: "user", text: trimmed, createdAt: new Date() },
+        { role: "assistant", text: reply, createdAt: new Date() },
+      ].slice(-40);
+
+      req.user.coachHistory = updatedHistory;
+      await req.user.save();
+    }
+
     return res.json({ success: true, data: { reply } });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getCoachHistory = async (req, res, next) => {
+  try {
+    const history = (req.user.coachHistory || []).slice(-40);
+    return res.json({ success: true, data: { history } });
   } catch (error) {
     return next(error);
   }
@@ -192,4 +214,5 @@ const chatWithCoach = async (req, res, next) => {
 
 module.exports = {
   chatWithCoach,
+  getCoachHistory,
 };

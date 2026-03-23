@@ -101,7 +101,51 @@ const updateStudySessionProof = async (req, res, next) => {
   }
 };
 
+const listEvidenceSessions = async (req, res, next) => {
+  try {
+    const { subjectId, from, to } = req.query;
+    const filter = {
+      userId: req.user._id,
+      proofImageUrl: { $ne: "" },
+    };
+
+    if (subjectId) {
+      filter.subjectId = subjectId;
+    }
+
+    if (from || to) {
+      const start = from ? new Date(`${from}T00:00:00.000Z`) : null;
+      const end = to ? new Date(`${to}T23:59:59.999Z`) : null;
+      filter.startedAt = {};
+      if (start) filter.startedAt.$gte = start;
+      if (end) filter.startedAt.$lte = end;
+    }
+
+    const sessions = await StudySession.find(filter)
+      .sort({ startedAt: -1 })
+      .populate("subjectId", "name")
+      .populate("topicId", "title")
+      .lean();
+
+    const data = sessions.map((session) => ({
+      id: session._id,
+      proofImageUrl: session.proofImageUrl,
+      startedAt: session.startedAt,
+      durationSeconds: session.durationSeconds,
+      subjectId: session.subjectId?._id || session.subjectId,
+      subjectName: session.subjectId?.name || "Subject",
+      topicId: session.topicId?._id || session.topicId,
+      topicTitle: session.topicId?.title || "Topic",
+    }));
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   saveStudySession,
   updateStudySessionProof,
+  listEvidenceSessions,
 };
