@@ -10,7 +10,13 @@ const getHistory = async () => {
   return response.data.data;
 };
 
+const clearHistory = async () => {
+  const response = await api.delete("/coach/history");
+  return response.data.data;
+};
+
 export default {
   sendMessage,
   getHistory,
+  clearHistory,
 };

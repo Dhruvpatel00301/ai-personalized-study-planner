@@ -44,6 +44,10 @@ html {
   overflow-x: hidden;
 }
 
+.no-scroll {
+  overflow: hidden !important;
+}
+
 .desktop-shell {
   width: 100%;
 }

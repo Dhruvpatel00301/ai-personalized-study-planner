@@ -37,6 +37,8 @@ const register = async (req, res, next) => {
           profileImageUrl: user.profileImageUrl,
           timezone: user.timezone,
           reminderHour: user.reminderHour,
+          dailyTargetMinutes: user.dailyTargetMinutes,
+          weeklyTargetHours: user.weeklyTargetHours,
         },
       },
     });
@@ -73,6 +75,8 @@ const login = async (req, res, next) => {
           profileImageUrl: user.profileImageUrl,
           timezone: user.timezone,
           reminderHour: user.reminderHour,
+          dailyTargetMinutes: user.dailyTargetMinutes,
+          weeklyTargetHours: user.weeklyTargetHours,
         },
       },
     });
@@ -91,6 +95,8 @@ const me = async (req, res) => {
       profileImageUrl: req.user.profileImageUrl,
       timezone: req.user.timezone,
       reminderHour: req.user.reminderHour,
+      dailyTargetMinutes: req.user.dailyTargetMinutes,
+      weeklyTargetHours: req.user.weeklyTargetHours,
       streakCurrent: req.user.streakCurrent,
       streakBest: req.user.streakBest,
     },

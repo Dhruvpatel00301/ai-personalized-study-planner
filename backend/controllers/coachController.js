@@ -102,8 +102,8 @@ const respondToMessage = async (user, message) => {
       return "Stick to today's tasks first, then review weak topics. If you miss a day, recalculate your plan.";
     }
 
-      return "I can help with today's tasks, weak topics, or study plan. Try: \"What should I study today?\"";
-    }
+    return "I can help with today's tasks, weak topics, or study plan. Try: \"What should I study today?\"";
+  }
 
   const contextLines = [
     `Date: ${todaySummary.date}`,
@@ -212,7 +212,18 @@ const getCoachHistory = async (req, res, next) => {
   }
 };
 
+const clearCoachHistory = async (req, res, next) => {
+  try {
+    req.user.coachHistory = [];
+    await req.user.save();
+    return res.json({ success: true, data: { cleared: true } });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   chatWithCoach,
   getCoachHistory,
+  clearCoachHistory,
 };

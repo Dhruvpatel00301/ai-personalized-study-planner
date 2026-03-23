@@ -36,6 +36,18 @@ const userSchema = new mongoose.Schema(
       min: 0,
       max: 23,
     },
+    dailyTargetMinutes: {
+      type: Number,
+      default: 60,
+      min: 5,
+      max: 600,
+    },
+    weeklyTargetHours: {
+      type: Number,
+      default: 6,
+      min: 1,
+      max: 80,
+    },
     streakCurrent: {
       type: Number,
       default: 0,

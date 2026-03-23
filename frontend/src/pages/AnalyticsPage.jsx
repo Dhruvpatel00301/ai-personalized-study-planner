@@ -32,6 +32,7 @@ function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeImage, setActiveImage] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   const allowedSubjectIds = useMemo(
     () => new Set(subjects.map((subject) => String(subject._id))),
@@ -77,6 +78,31 @@ function AnalyticsPage() {
       setError(err.response?.data?.message || "Unable to load evidence gallery");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!activeImage?.proofImageUrl) return;
+    setDownloading(true);
+    setError("");
+    try {
+      const response = await fetch(activeImage.proofImageUrl, { mode: "cors" });
+      if (!response.ok) {
+        throw new Error("Unable to download image");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = buildFileName(activeImage);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError("Download failed. Please try again.");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -204,15 +230,14 @@ function AnalyticsPage() {
               onClick={(event) => event.stopPropagation()}
             >
               <div className="absolute right-3 top-3 flex items-center gap-2">
-                <a
-                  href={activeImage.proofImageUrl}
-                  download={buildFileName(activeImage)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700"
+                <button
+                  type="button"
+                  className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                  onClick={handleDownload}
+                  disabled={downloading}
                 >
-                  Download
-                </a>
+                  {downloading ? "Downloading..." : "Download"}
+                </button>
                 <button
                   type="button"
                   className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700"

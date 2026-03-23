@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 
 const profileService = {
   async updateProfile(payload) {
@@ -16,7 +16,11 @@ const profileService = {
     });
     return data.data;
   },
+
+  async getGoalProgress() {
+    const { data } = await api.get("/profile/goals");
+    return data.data;
+  },
 };
 
 export default profileService;
-

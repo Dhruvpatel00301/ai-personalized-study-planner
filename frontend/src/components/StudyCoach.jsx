@@ -3,11 +3,19 @@ import coachService from "../services/coachService";
 
 const STORAGE_KEY = "studyCoachHistory";
 
+const defaultWelcome = [
+  {
+    role: "assistant",
+    text: "Hi! I'm your Study Coach. Ask me about today's tasks or weak topics.",
+  },
+];
+
 export default function StudyCoach({ hideTitle = false }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [clearing, setClearing] = useState(false);
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -37,12 +45,7 @@ export default function StudyCoach({ hideTitle = false }) {
       }
 
       if (mounted) {
-        setMessages([
-          {
-            role: "assistant",
-            text: "Hi! I'm your Study Coach. Ask me about today's tasks or weak topics.",
-          },
-        ]);
+        setMessages(defaultWelcome);
       }
     };
 
@@ -80,13 +83,38 @@ export default function StudyCoach({ hideTitle = false }) {
     }
   };
 
+  const handleClear = async () => {
+    setClearing(true);
+    setError("");
+    try {
+      await coachService.clearHistory();
+    } catch (err) {
+      // ignore backend errors and still clear local
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    setMessages(defaultWelcome);
+    setClearing(false);
+  };
+
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex items-center justify-between">
+        {hideTitle ? null : <p className="section-title">Study Coach</p>}
+        <button
+          type="button"
+          onClick={handleClear}
+          className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+          disabled={clearing || loading}
+        >
+          {clearing ? "Clearing..." : "Clear Chat"}
+        </button>
+      </div>
+
+      <div className="mt-3 flex-1 overflow-y-auto">
         <div className="space-y-3">
           <div className="surface-card p-4">
-            {hideTitle ? null : <p className="section-title">Study Coach</p>}
-            <div className={hideTitle ? "space-y-2" : "mt-3 space-y-2"}>
+            {hideTitle ? null : null}
+            <div className="space-y-2">
               {messages.map((msg, index) => (
                 <div
                   key={`${msg.role}-${index}`}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import StickyHeader from "./StickyHeader";
 import BottomNav from "./BottomNav";
@@ -7,6 +7,15 @@ import DesktopSidebar from "./DesktopSidebar";
 
 function AppShell() {
   const [coachOpen, setCoachOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle("no-scroll", coachOpen);
+    document.documentElement.classList.toggle("no-scroll", coachOpen);
+    return () => {
+      document.body.classList.remove("no-scroll");
+      document.documentElement.classList.remove("no-scroll");
+    };
+  }, [coachOpen]);
 
   return (
     <div className="relative min-h-screen px-4 pb-28 pt-28 md:px-6 md:pb-8 md:pt-28">
@@ -26,17 +35,29 @@ function AppShell() {
           <button
             type="button"
             onClick={() => setCoachOpen(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-white shadow-lg transition hover:bg-brand-600"
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 text-sm font-semibold text-white shadow-lg transition hover:bg-brand-600"
             aria-label="Open Study Coach"
           >
-            AI
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+            </svg>
+            AI Coach
           </button>
         </div>
       </div>
 
       {coachOpen ? (
         <div className="fixed inset-0 z-50 bg-slate-50">
-          <div className="mx-auto flex h-full max-w-[430px] flex-col px-4 pb-4 pt-6 md:max-w-[720px]">
+          <div className="mx-auto flex h-full w-full max-w-[430px] flex-col px-4 pb-4 pt-6 md:max-w-none md:px-6">
             <div className="surface-card mb-4 flex items-center justify-between p-3">
               <p className="section-title">Study Coach</p>
               <button

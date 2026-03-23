@@ -3,6 +3,7 @@ const Subject = require("../models/Subject");
 const Topic = require("../models/Topic");
 const User = require("../models/User");
 const StudyPlan = require("../models/StudyPlan");
+const StudySession = require("../models/StudySession");
 const { getTodayInTimeZone } = require("../utils/dateTime");
 const { resetStreakIfMissedDays } = require("../utils/streakUtils");
 const { recalculateSubjectSchedule } = require("./studyPlanController");
@@ -42,11 +43,12 @@ const getDashboardSummary = async (req, res, next) => {
       shouldSaveUser = true;
     }
 
-    const [todaySchedules, allSchedules, subjectCount, topicsMap] = await Promise.all([
+    const [todaySchedules, allSchedules, subjectCount, topicsMap, todaySessions] = await Promise.all([
       DailySchedule.find({ userId: user._id, date: today }).lean(),
       DailySchedule.find({ userId: user._id }),
       Subject.countDocuments({ userId: user._id, isArchived: false }),
       Topic.find({ userId: user._id }).select("_id strength").lean(),
+      StudySession.find({ userId: user._id, startedAt: { $gte: today } }).select("durationSeconds"),
     ]);
 
     const subjectIds = todaySchedules.map((schedule) => schedule.subjectId).filter(Boolean);
@@ -92,7 +94,6 @@ const getDashboardSummary = async (req, res, next) => {
           : planFallback?.examId || null;
         const resolvedExamName = subject.examId?.name || planFallback?.examName || "No Exam";
 
-        // Keep records consistent once we can infer exam linkage.
         if (!subject.examId?._id && resolvedExamId) {
           subjectsToBackfill.push({
             updateOne: {
@@ -128,9 +129,7 @@ const getDashboardSummary = async (req, res, next) => {
       const resolvedExamName =
         subjectMeta?.examName || planFallback?.examName || schedule.examNameSnapshot || "No Exam";
       const resolvedExamId =
-        subjectMeta?.examId ||
-        planFallback?.examId ||
-        (schedule.examId ? String(schedule.examId) : null);
+        subjectMeta?.examId || planFallback?.examId || (schedule.examId ? String(schedule.examId) : null);
 
       scheduleExamMetaMap.set(String(schedule._id), {
         examName: resolvedExamName,
@@ -159,7 +158,6 @@ const getDashboardSummary = async (req, res, next) => {
       await DailySchedule.bulkWrite(scheduleExamBackfills, { ordered: false });
     }
 
-    // build a map of topicId -> strength for quick lookup
     const topicStrengthMap = {};
     topicsMap.forEach((topic) => {
       topicStrengthMap[String(topic._id)] = topic.strength || "normal";
@@ -194,6 +192,10 @@ const getDashboardSummary = async (req, res, next) => {
       ? Math.round((completedTasks / allTasks.length) * 100)
       : 0;
 
+    const dailyMinutes = Math.round(
+      todaySessions.reduce((sum, session) => sum + (session.durationSeconds || 0), 0) / 60
+    );
+
     if (shouldSaveUser) {
       await user.save();
     }
@@ -207,6 +209,7 @@ const getDashboardSummary = async (req, res, next) => {
         streakBest: user.streakBest,
         progressPercent,
         subjectCount,
+        todayMinutes: dailyMinutes,
       },
     });
   } catch (error) {

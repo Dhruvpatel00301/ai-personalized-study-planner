@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
 import examService from "../services/examService";
 import studySessionService from "../services/studySessionService";
@@ -21,7 +21,6 @@ function HomePage() {
   const [taskView, setTaskView] = useState("remaining");
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
-  // track the currently displayed date so we can auto-refresh past midnight
   const [currentDate, setCurrentDate] = useState(todayLabel());
 
   const loadSummary = async () => {
@@ -50,7 +49,6 @@ function HomePage() {
   useEffect(() => {
     loadSummary();
 
-    // check every minute whether the date has changed, and reload if so
     const interval = setInterval(() => {
       const today = todayLabel();
       if (today !== currentDate) {
@@ -66,7 +64,6 @@ function HomePage() {
     setError("");
     setSavingTaskId(taskId);
 
-    // optimistic update so user sees 'Done' immediately
     setSummary((prev) => {
       if (!prev) return prev;
       const updated = prev.todayTasks.map((t) =>
@@ -79,7 +76,6 @@ function HomePage() {
       await dashboardService.markComplete(taskId);
       await loadSummary();
     } catch (err) {
-      // if something went wrong (404 due to date change or network), refresh and show message
       await loadSummary();
       setError(
         err.response?.data?.message || "Unable to mark task complete"
@@ -131,7 +127,9 @@ function HomePage() {
       {error ? <p className="status-error">{error}</p> : null}
 
       <ProgressSummaryCard
-        progressPercent={summary?.progressPercent || 0}
+        tasksTotal={summary?.todayTasks?.length || 0}
+        tasksCompleted={summary?.todayTasks?.filter((task) => task.completed).length || 0}
+        minutesSpent={summary?.todayMinutes || 0}
         streakCurrent={summary?.streakCurrent || 0}
         streakBest={summary?.streakBest || 0}
       />
@@ -207,7 +205,7 @@ function HomePage() {
                     </p>
                   </div>
                   <span className={`text-2xl transition transform ${expandedExam === examId ? "rotate-180" : ""}`}>
-                    ▼
+                    ?
                   </span>
                 </button>
 
@@ -274,7 +272,7 @@ function HomePage() {
                     expandedExam === `completed-${examId}` ? "rotate-180" : ""
                   }`}
                 >
-                  ▼
+                  ?
                 </span>
               </button>
 
@@ -306,7 +304,6 @@ function HomePage() {
           description="Finish a task by saving time and uploading a screenshot."
         />
       )}
-
     </div>
   );
 }
