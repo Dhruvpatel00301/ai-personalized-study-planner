@@ -131,8 +131,9 @@ const getGoalProgress = async (req, res, next) => {
         userId: user._id,
         startedAt: { $gte: todayStart, $lte: todayEnd },
       })
-        .select("durationSeconds topicId")
-        .populate("topicId", "title"),
+        .select("durationSeconds topicId subjectId")
+        .populate("topicId", "title")
+        .populate("subjectId", "name"),
       StudySession.find({
         userId: user._id,
         startedAt: { $gte: weekStart, $lte: weekEnd },
@@ -144,14 +145,20 @@ const getGoalProgress = async (req, res, next) => {
 
     const topicTotals = todaySessions.reduce((acc, session) => {
       const topicTitle = session.topicId?.title || "Topic";
-      acc[topicTitle] = (acc[topicTitle] || 0) + (session.durationSeconds || 0);
+      const subjectName = session.subjectId?.name || "Subject";
+      const key = `${topicTitle}__${subjectName}`;
+      if (!acc[key]) {
+        acc[key] = { topicTitle, subjectName, seconds: 0 };
+      }
+      acc[key].seconds += session.durationSeconds || 0;
       return acc;
     }, {});
 
-    const topicBreakdown = Object.entries(topicTotals)
-      .map(([topicTitle, seconds]) => ({
-        topicTitle,
-        minutes: Math.round(seconds / 60),
+    const topicBreakdown = Object.values(topicTotals)
+      .map((entry) => ({
+        topicTitle: entry.topicTitle,
+        subjectName: entry.subjectName,
+        minutes: Math.round(entry.seconds / 60),
       }))
       .sort((a, b) => b.minutes - a.minutes);
 

@@ -312,9 +312,14 @@ function ProfilePage() {
                 {goalStats?.todayTopicBreakdown?.length ? (
                   <ul className="mt-2 space-y-1">
                     {goalStats.todayTopicBreakdown.map((entry) => (
-                      <li key={entry.topicTitle} className="flex items-center justify-between text-sm text-slate-600">
-                        <span>{entry.topicTitle}</span>
-                        <span className="font-semibold text-slate-800">{formatMinutes(entry.minutes)}</span>
+                      <li key={`${entry.topicTitle}-${entry.subjectName}`} className="text-sm text-slate-600">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-800">{entry.topicTitle}</p>
+                            <p className="text-xs text-slate-500">{entry.subjectName}</p>
+                          </div>
+                          <span className="font-semibold text-slate-800">{formatMinutes(entry.minutes)}</span>
+                        </div>
                       </li>
                     ))}
                   </ul>

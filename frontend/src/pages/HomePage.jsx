@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
 import examService from "../services/examService";
 import studySessionService from "../services/studySessionService";
+import recoveryService from "../services/recoveryService";
 import ProgressSummaryCard from "../components/ProgressSummaryCard";
 import ExamTasksGroup from "../components/ExamTasksGroup";
 import Loader from "../components/Loader";
@@ -19,6 +20,8 @@ function HomePage() {
   const [expandedExam, setExpandedExam] = useState(null);
   const [examNameMap, setExamNameMap] = useState({});
   const [taskView, setTaskView] = useState("remaining");
+  const [recoveryPreview, setRecoveryPreview] = useState(null);
+  const [applyingRecovery, setApplyingRecovery] = useState(false);
   const tip = useMemo(() => AI_TIPS[Math.floor(Math.random() * AI_TIPS.length)], []);
 
   const [currentDate, setCurrentDate] = useState(todayLabel());
@@ -46,14 +49,25 @@ function HomePage() {
     }
   };
 
+  const loadRecoveryPreview = async () => {
+    try {
+      const data = await recoveryService.getPreview();
+      setRecoveryPreview(data);
+    } catch {
+      setRecoveryPreview(null);
+    }
+  };
+
   useEffect(() => {
     loadSummary();
+    loadRecoveryPreview();
 
     const interval = setInterval(() => {
       const today = todayLabel();
       if (today !== currentDate) {
         setCurrentDate(today);
         loadSummary();
+        loadRecoveryPreview();
       }
     }, 60 * 1000);
 
@@ -75,6 +89,7 @@ function HomePage() {
     try {
       await dashboardService.markComplete(taskId);
       await loadSummary();
+      await loadRecoveryPreview();
     } catch (err) {
       await loadSummary();
       setError(
@@ -113,9 +128,24 @@ function HomePage() {
     try {
       await studySessionService.uploadProof(sessionId, proofFile);
       setToast({ type: "success", message: "Screenshot uploaded" });
+      await loadSummary();
+      await loadRecoveryPreview();
     } catch (err) {
       setError(err.response?.data?.message || "Unable to upload screenshot");
       setToast({ type: "error", message: "Upload failed" });
+    }
+  };
+
+  const handleApplyRecovery = async () => {
+    setApplyingRecovery(true);
+    try {
+      await recoveryService.applyPlan();
+      await loadSummary();
+      await loadRecoveryPreview();
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to apply recovery plan");
+    } finally {
+      setApplyingRecovery(false);
     }
   };
 
@@ -133,6 +163,69 @@ function HomePage() {
         streakCurrent={summary?.streakCurrent || 0}
         streakBest={summary?.streakBest || 0}
       />
+
+      {recoveryPreview?.missedDaysCount ? (
+        <div className="surface-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="section-title">Smart Recovery Planner</p>
+              <p className="text-sm text-slate-600">
+                You missed {recoveryPreview.missedDaysCount} day
+                {recoveryPreview.missedDaysCount !== 1 ? "s" : ""}. Let's get back on track.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleApplyRecovery}
+              className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600 disabled:opacity-60"
+              disabled={applyingRecovery}
+            >
+              {applyingRecovery ? "Applying..." : "Apply Recovery"}
+            </button>
+          </div>
+
+          {recoveryPreview.recoverySprint?.length ? (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recovery sprint</p>
+              <div className="mt-2 grid gap-2 md:grid-cols-2">
+                {recoveryPreview.recoverySprint.map((item) => (
+                  <div key={item.topicTitle} className="rounded-lg bg-brand-50 p-3 text-sm text-slate-700">
+                    <span className="font-semibold text-slate-800">{item.topicTitle}</span>
+                    <span className="text-slate-500"> · {item.minutes} min</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {recoveryPreview.before?.length ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg bg-white/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Before</p>
+                {recoveryPreview.before.map((day) => (
+                  <div key={day.date} className="mt-2">
+                    <p className="text-xs font-semibold text-slate-600">{day.date}</p>
+                    <p className="text-sm text-slate-700">
+                      {day.tasks.length ? day.tasks.join(", ") : "No tasks"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-lg bg-white/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">After</p>
+                {recoveryPreview.after.map((day) => (
+                  <div key={day.date} className="mt-2">
+                    <p className="text-xs font-semibold text-slate-600">{day.date}</p>
+                    <p className="text-sm text-slate-700">
+                      {day.tasks.length ? day.tasks.join(", ") : "No tasks"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="surface-card p-4">
         <p className="section-title">Today</p>

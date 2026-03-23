@@ -12,6 +12,7 @@ import ExamDetailPage from "./pages/ExamDetailPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import FigmaPreviewPage from "./pages/FigmaPreviewPage";
 
 function App() {
   return (
@@ -36,6 +37,10 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
+        <Route element={<AppShell />}>
+          <Route path="/figma-preview" element={<FigmaPreviewPage />} />
+        </Route>
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </MobileOnlyGate>
@@ -43,4 +48,3 @@ function App() {
 }
 
 export default App;
-
