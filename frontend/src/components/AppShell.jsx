@@ -4,18 +4,40 @@ import StickyHeader from "./StickyHeader";
 import BottomNav from "./BottomNav";
 import StudyCoach from "./StudyCoach";
 import DesktopSidebar from "./DesktopSidebar";
+import OnboardingModal from "./OnboardingModal";
 
 function AppShell() {
   const [coachOpen, setCoachOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    document.body.classList.toggle("no-scroll", coachOpen);
-    document.documentElement.classList.toggle("no-scroll", coachOpen);
+    document.body.classList.toggle("no-scroll", coachOpen || showOnboarding);
+    document.documentElement.classList.toggle("no-scroll", coachOpen || showOnboarding);
     return () => {
       document.body.classList.remove("no-scroll");
       document.documentElement.classList.remove("no-scroll");
     };
-  }, [coachOpen]);
+  }, [coachOpen, showOnboarding]);
+
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem("onboarding_seen_v1");
+      if (!seen) {
+        setShowOnboarding(true);
+      }
+    } catch {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleCloseOnboarding = () => {
+    try {
+      localStorage.setItem("onboarding_seen_v1", "true");
+    } catch {
+      // ignore storage errors
+    }
+    setShowOnboarding(false);
+  };
 
   return (
     <div className="relative min-h-screen px-4 pb-28 pt-28 md:px-6 md:pb-8 md:pt-28">
@@ -75,6 +97,7 @@ function AppShell() {
         </div>
       ) : null}
 
+      {showOnboarding ? <OnboardingModal onClose={handleCloseOnboarding} /> : null}
       <BottomNav />
     </div>
   );

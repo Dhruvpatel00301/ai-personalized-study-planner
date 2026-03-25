@@ -27,13 +27,78 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
   const [savedProofUrl, setSavedProofUrl] = useState("");
   const [hasAutoCompleted, setHasAutoCompleted] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef(null);
   const storageKey = `taskTimer:${task.taskId}`;
   const activeKey = "activeTaskTimer";
+  const STALE_ACTIVE_MS = 15000;
+
+  const claimActiveSlot = () => {
+    try {
+      const active = localStorage.getItem(activeKey);
+      if (active && active !== String(task.taskId)) {
+        const activeStateRaw = localStorage.getItem(`taskTimer:${active}`);
+        if (activeStateRaw) {
+          try {
+            const activeState = JSON.parse(activeStateRaw);
+            const lastUpdated = typeof activeState?.updatedAt === "number" ? activeState.updatedAt : 0;
+            const isStale = lastUpdated && Date.now() - lastUpdated > STALE_ACTIVE_MS;
+            if (activeState?.isRunning || isStale) {
+              localStorage.setItem(
+                `taskTimer:${active}`,
+                JSON.stringify({
+                  ...activeState,
+                  isRunning: false,
+                  updatedAt: Date.now(),
+                })
+              );
+            }
+          } catch {
+            // ignore parse errors
+          }
+        }
+        localStorage.removeItem(activeKey);
+      }
+      localStorage.setItem(activeKey, String(task.taskId));
+      return true;
+    } catch {
+      return true;
+    }
+  };
+
+  const canClaimActiveSlot = () => {
+    try {
+      const active = localStorage.getItem(activeKey);
+      if (!active || active === String(task.taskId)) {
+        return true;
+      }
+      const activeStateRaw = localStorage.getItem(`taskTimer:${active}`);
+      if (!activeStateRaw) {
+        localStorage.removeItem(activeKey);
+        return true;
+      }
+      const activeState = JSON.parse(activeStateRaw);
+      const lastUpdated = typeof activeState?.updatedAt === "number" ? activeState.updatedAt : 0;
+      if (!lastUpdated || Date.now() - lastUpdated > STALE_ACTIVE_MS) {
+        localStorage.removeItem(activeKey);
+        return true;
+      }
+      if (!activeState?.isRunning) {
+        localStorage.removeItem(activeKey);
+        return true;
+      }
+      return false;
+    } catch {
+      return true;
+    }
+  };
 
   const persistState = (next) => {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ ...next, updatedAt: Date.now() })
+      );
     } catch {
       // ignore storage write errors
     }
@@ -44,6 +109,18 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const data = JSON.parse(raw);
+        const lastUpdated = typeof data.updatedAt === "number" ? data.updatedAt : 0;
+        if (data.isRunning && lastUpdated && Date.now() - lastUpdated > STALE_ACTIVE_MS) {
+          setIsRunning(false);
+          persistState({
+            isRunning: false,
+            startAt: data.startAt || null,
+            elapsedSeconds: data.elapsedSeconds || 0,
+            isSaved: data.isSaved || false,
+            savedElapsed: data.savedElapsed || 0,
+            savedSessionId: data.savedSessionId || "",
+          });
+        }
         if (typeof data.elapsedSeconds === "number") {
           setElapsedSeconds(data.elapsedSeconds);
         }
@@ -54,7 +131,22 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
           setIsRunning(data.isRunning);
         }
         if (typeof data.isSaved === "boolean") {
-          setIsSaved(data.isSaved);
+          const hasSession = typeof data.savedSessionId === "string" && data.savedSessionId.length > 0;
+          if (data.isSaved && !hasSession) {
+            setIsSaved(false);
+            setSavedSessionId("");
+            setUploadError("Session not saved. Tap Save and try again.");
+            persistState({
+              isRunning: false,
+              startAt: typeof data.startAt === "number" ? data.startAt : null,
+              elapsedSeconds: typeof data.elapsedSeconds === "number" ? data.elapsedSeconds : 0,
+              isSaved: false,
+              savedElapsed: typeof data.savedElapsed === "number" ? data.savedElapsed : 0,
+              savedSessionId: "",
+            });
+          } else {
+            setIsSaved(data.isSaved);
+          }
         }
         if (typeof data.savedElapsed === "number") {
           setSavedElapsed(data.savedElapsed);
@@ -82,6 +174,14 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
         const active = localStorage.getItem(activeKey);
         if (active && active !== String(task.taskId)) {
           setIsRunning(false);
+          persistState({
+            isRunning: false,
+            startAt,
+            elapsedSeconds,
+            isSaved,
+            savedElapsed,
+            savedSessionId,
+          });
           return;
         }
       } catch {
@@ -146,27 +246,14 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
       return;
     }
     if (isSaved) {
-      setIsSaved(false);
-      setSavedElapsed(0);
-      setSavedSessionId("");
-      setHasAutoCompleted(false);
-      setSavedProofUrl("");
-      setElapsedSeconds(0);
-      if (proofUrl) {
-        URL.revokeObjectURL(proofUrl);
-      }
-      if (savedProofUrl) {
-        URL.revokeObjectURL(savedProofUrl);
-      }
-      setProofFile(null);
-      setProofUrl("");
+      return;
     }
     try {
-      const active = localStorage.getItem(activeKey);
-      if (active && active !== String(task.taskId)) {
-        return;
+      if (!canClaimActiveSlot()) {
+        claimActiveSlot();
+      } else {
+        localStorage.setItem(activeKey, String(task.taskId));
       }
-      localStorage.setItem(activeKey, String(task.taskId));
     } catch {
       // ignore storage errors
     }
@@ -187,9 +274,10 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setUploadError("");
     if (proofUrl) {
       URL.revokeObjectURL(proofUrl);
     }
@@ -201,17 +289,24 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
         URL.revokeObjectURL(savedProofUrl);
       }
       setSavedProofUrl(nextUrl);
+      if (!savedSessionId) {
+        setUploadError("Session not saved. Tap Save and try again.");
+        return;
+      }
       if (savedSessionId && onUploadProof) {
-        onUploadProof({ sessionId: savedSessionId, proofFile: file })
-          .then(() => {
-            if (onComplete && !task.completed && !hasAutoCompleted) {
-              setHasAutoCompleted(true);
-              onComplete(task.taskId);
-            }
-          })
-          .catch(() => {
-            // ignore upload errors here; HomePage will surface errors
-          });
+        try {
+          const result = await onUploadProof({ sessionId: savedSessionId, proofFile: file });
+          if (result?.ok === false) {
+            setUploadError(result.message || "Upload failed");
+            return;
+          }
+          if (onComplete && !task.completed && !hasAutoCompleted) {
+            setHasAutoCompleted(true);
+            onComplete(task.taskId);
+          }
+        } catch (err) {
+          setUploadError(err?.response?.data?.message || "Upload failed");
+        }
       }
     }
   };
@@ -220,9 +315,7 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
     if (isRunning) {
       setIsRunning(false);
     }
-    setSavedElapsed(elapsedSeconds);
-    setSavedProofUrl(proofUrl || "");
-    setIsSaved(true);
+    setUploadError("");
     if (onSave) {
       try {
         const result = await onSave({
@@ -231,30 +324,36 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
           startedAt: startAt ? new Date(startAt).toISOString() : null,
           proofFile,
         });
-        if (result?.id) {
-          setSavedSessionId(result.id);
-          persistState({
-            isRunning: false,
-            startAt,
-            elapsedSeconds,
-            isSaved: true,
-            savedElapsed: elapsedSeconds,
-            savedSessionId: result.id,
-          });
+        if (!result?.id || result?.ok === false) {
+          setIsSaved(false);
+          setSavedSessionId("");
+          setUploadError(result?.message || "Save failed. Please try again.");
+          return;
         }
+        setSavedElapsed(elapsedSeconds);
+        setSavedProofUrl(proofUrl || "");
+        setIsSaved(true);
+        setSavedSessionId(result.id);
+        persistState({
+          isRunning: false,
+          startAt,
+          elapsedSeconds,
+          isSaved: true,
+          savedElapsed: elapsedSeconds,
+          savedSessionId: result.id,
+        });
         // do not auto-complete on save; completion happens after screenshot upload
       } catch {
-        // keep UI responsive even if save fails
+        setIsSaved(false);
+        setSavedSessionId("");
+        setUploadError("Save failed. Please try again.");
+        return;
       }
+    } else {
+      setIsSaved(false);
+      setUploadError("Save failed. Please try again.");
+      return;
     }
-    persistState({
-      isRunning: false,
-      startAt,
-      elapsedSeconds,
-      isSaved: true,
-      savedElapsed: elapsedSeconds,
-      savedSessionId,
-    });
     try {
       const active = localStorage.getItem(activeKey);
       if (active === String(task.taskId)) {
@@ -297,7 +396,7 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
-              disabled={disabled}
+              disabled={disabled || isSaved}
               onClick={toggleTimer}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                 isRunning ? "bg-emerald-100 text-emerald-700" : "bg-brand-500 text-white"
@@ -344,6 +443,7 @@ function TaskCard({ task, disabled, hideStrengthLabel, onComplete, onSave, onUpl
           />
         </div>
       ) : null}
+      {uploadError ? <p className="mt-2 text-xs font-semibold text-red-600">{uploadError}</p> : null}
     </div>
   );
 }

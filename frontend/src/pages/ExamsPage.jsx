@@ -9,6 +9,13 @@ function ExamsPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", examDate: "", description: "" });
   const [error, setError] = useState("");
+  const [showSample, setShowSample] = useState(false);
+
+  const sampleExam = {
+    name: "IIIT PGEE",
+    examDate: "2026-05-02",
+    description: "Entrance exam",
+  };
 
   const loadExams = async () => {
     setLoading(true);
@@ -55,10 +62,19 @@ function ExamsPage() {
   if (loading) return <Loader label="Loading exams..." />;
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="surface-card p-4">
-        <p className="mb-3 section-title">Create Exam</p>
-        <div className="space-y-2">
+    <div className="space-y-5">
+      <form onSubmit={handleSubmit} className="surface-card p-5 md:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="section-title">Create Exam</p>
+          <button
+            type="button"
+            onClick={() => setShowSample((prev) => !prev)}
+            className="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+          >
+            {showSample ? "Hide sample" : "Show sample"}
+          </button>
+        </div>
+        <div className="mt-3 space-y-3">
           <input
             className="field-input"
             placeholder="Exam name"
@@ -82,12 +98,32 @@ function ExamsPage() {
           />
         </div>
 
-        {error ? <p className="status-error mt-2">{error}</p> : null}
+        {error ? <p className="status-error mt-3">{error}</p> : null}
 
-        <button type="submit" className="btn-primary mt-3">
+        <button type="submit" className="btn-primary mt-4">
           Add Exam
         </button>
       </form>
+
+      {showSample ? (
+        <div className="surface-card p-4">
+          <p className="section-title">Sample exam</p>
+          <div className="mt-3 space-y-2 text-sm text-slate-700">
+            <p className="font-semibold">{sampleExam.name}</p>
+            <p className="inline-block rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
+              5/2/2026
+            </p>
+            <p className="text-sm text-slate-600">{sampleExam.description}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setForm(sampleExam)}
+            className="mt-4 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
+          >
+            Use sample in form
+          </button>
+        </div>
+      ) : null}
 
       {exams.length ? (
         <div className="space-y-3">

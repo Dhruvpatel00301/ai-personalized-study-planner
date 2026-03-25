@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+ï»¿import { useEffect, useMemo, useState } from "react";
 import examService from "../services/examService";
 import subjectService from "../services/subjectService";
 import studySessionService from "../services/studySessionService";
@@ -81,6 +81,7 @@ function AnalyticsPage() {
     }
   };
 
+
   const handleDownload = async () => {
     if (!activeImage?.proofImageUrl) return;
     setDownloading(true);
@@ -121,6 +122,7 @@ function AnalyticsPage() {
     loadSubjects(selectedExam);
   }, [selectedExam]);
 
+
   if (loading) {
     return <Loader label="Loading evidence gallery..." />;
   }
@@ -129,61 +131,72 @@ function AnalyticsPage() {
     <div className="space-y-4">
       {error ? <p className="status-error">{error}</p> : null}
 
-      <div className="surface-card p-4">
-        <p className="section-title">Evidence Gallery</p>
-        <p className="text-sm text-slate-600">
-          Review your study proof screenshots and track progress by exam, subject, or date.
-        </p>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Exam
-            <select
-              className="field-input mt-2"
-              value={selectedExam}
-              onChange={(event) => setSelectedExam(event.target.value)}
-            >
-              <option value="">All exams</option>
-              {exams.map((exam) => (
-                <option key={exam._id} value={exam._id}>
-                  {exam.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Subject
-            <select
-              className="field-input mt-2"
-              value={selectedSubject}
-              onChange={(event) => setSelectedSubject(event.target.value)}
-              disabled={!subjects.length}
-            >
-              <option value="">All subjects</option>
-              {subjects.map((subject) => (
-                <option key={subject._id} value={subject._id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            From
-            <input
-              type="date"
-              className="field-input mt-2"
-              value={fromDate}
-              onChange={(event) => setFromDate(event.target.value)}
-            />
-          </label>
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            To
-            <input
-              type="date"
-              className="field-input mt-2"
-              value={toDate}
-              onChange={(event) => setToDate(event.target.value)}
-            />
-          </label>
+
+      <div className="surface-card p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="section-title">Evidence Gallery</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Review your study proof screenshots and track progress by exam, subject, or date.
+            </p>
+          </div>
+          <div className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+            Filters
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/70 bg-white/70 p-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Exam
+              <select
+                className="field-input mt-2 bg-white/90"
+                value={selectedExam}
+                onChange={(event) => setSelectedExam(event.target.value)}
+              >
+                <option value="">All exams</option>
+                {exams.map((exam) => (
+                  <option key={exam._id} value={exam._id}>
+                    {exam.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Subject
+              <select
+                className="field-input mt-2 bg-white/90"
+                value={selectedSubject}
+                onChange={(event) => setSelectedSubject(event.target.value)}
+                disabled={!subjects.length}
+              >
+                <option value="">All subjects</option>
+                {subjects.map((subject) => (
+                  <option key={subject._id} value={subject._id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              From
+              <input
+                type="date"
+                className="field-input mt-2 bg-white/90"
+                value={fromDate}
+                onChange={(event) => setFromDate(event.target.value)}
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              To
+              <input
+                type="date"
+                className="field-input mt-2 bg-white/90"
+                value={toDate}
+                onChange={(event) => setToDate(event.target.value)}
+              />
+            </label>
+          </div>
         </div>
       </div>
 
@@ -206,7 +219,7 @@ function AnalyticsPage() {
                 <p className="text-sm font-semibold text-slate-800">{session.topicTitle}</p>
                 <p className="text-xs text-slate-500">{session.subjectName}</p>
                 <p className="mt-2 text-xs text-slate-500">
-                  {new Date(session.startedAt).toLocaleDateString()} · {formatDuration(session.durationSeconds)}
+                  {new Date(session.startedAt).toLocaleDateString()} Â· {formatDuration(session.durationSeconds)}
                 </p>
               </div>
             </button>
@@ -255,7 +268,7 @@ function AnalyticsPage() {
                 <p className="text-sm font-semibold text-slate-800">{activeImage.topicTitle}</p>
                 <p className="text-xs text-slate-500">{activeImage.subjectName}</p>
                 <p className="mt-2 text-xs text-slate-500">
-                  {new Date(activeImage.startedAt).toLocaleDateString()} · {formatDuration(activeImage.durationSeconds)}
+                  {new Date(activeImage.startedAt).toLocaleDateString()} Â· {formatDuration(activeImage.durationSeconds)}
                 </p>
               </div>
             </div>
@@ -267,3 +280,4 @@ function AnalyticsPage() {
 }
 
 export default AnalyticsPage;
+

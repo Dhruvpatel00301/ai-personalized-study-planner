@@ -7,7 +7,7 @@ const dashboardService = {
   },
 
   async markComplete(taskId) {
-    const { data } = await api.post("/dashboard/complete", { taskId });
+    const { data } = await api.patch(`/daily-schedule/${taskId}/complete`);
     return data.data;
   },
 };

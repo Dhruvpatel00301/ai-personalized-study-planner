@@ -4,6 +4,8 @@ import AppShell from "./components/AppShell";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import LandingPage from "./pages/LandingPage";
+import HowItWorksPage from "./pages/HowItWorksPage";
 import HomePage from "./pages/HomePage";
 import SubjectsPage from "./pages/SubjectsPage";
 import SubjectDetailPage from "./pages/SubjectDetailPage";
@@ -18,6 +20,8 @@ function App() {
   return (
     <MobileOnlyGate>
       <Routes>
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 

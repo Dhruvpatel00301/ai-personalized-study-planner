@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import dashboardService from "../services/dashboardService";
 import examService from "../services/examService";
 import studySessionService from "../services/studySessionService";
@@ -100,7 +100,7 @@ function HomePage() {
     }
   };
 
-  const handleSaveSession = async ({ topicId, durationSeconds, startedAt, proofFile }) => {
+    const handleSaveSession = async ({ topicId, durationSeconds, startedAt, proofFile }) => {
     setError("");
     try {
       const result = await studySessionService.saveSession({
@@ -109,30 +109,41 @@ function HomePage() {
         startedAt,
         proofFile,
       });
-      if (proofFile) {
-        setToast({ type: "success", message: "Screenshot uploaded" });
+      if (result?.id) {
+        if (proofFile) {
+          setToast({ type: "success", message: "Screenshot uploaded" });
+        }
+        return { ok: true, ...result };
       }
-      return result;
+      const message = "Unable to save study session";
+      setError(message);
+      if (proofFile) {
+        setToast({ type: "error", message: `Upload failed: ${message}` });
+      }
+      return { ok: false, message };
     } catch (err) {
       const message = err.response?.data?.message || "Unable to save study session";
       setError(message);
       if (proofFile) {
-        setToast({ type: "error", message: "Upload failed" });
+        setToast({ type: "error", message: `Upload failed: ${message}` });
       }
-      return null;
+      return { ok: false, message };
     }
   };
 
-  const handleUploadProof = async ({ sessionId, proofFile }) => {
+    const handleUploadProof = async ({ sessionId, proofFile }) => {
     setError("");
     try {
       await studySessionService.uploadProof(sessionId, proofFile);
       setToast({ type: "success", message: "Screenshot uploaded" });
       await loadSummary();
       await loadRecoveryPreview();
+      return { ok: true };
     } catch (err) {
-      setError(err.response?.data?.message || "Unable to upload screenshot");
-      setToast({ type: "error", message: "Upload failed" });
+      const message = err.response?.data?.message || "Unable to upload screenshot";
+      setError(message);
+      setToast({ type: "error", message: `Upload failed: ${message}` });
+      return { ok: false, message };
     }
   };
 
@@ -191,7 +202,7 @@ function HomePage() {
                 {recoveryPreview.recoverySprint.map((item) => (
                   <div key={item.topicTitle} className="rounded-lg bg-brand-50 p-3 text-sm text-slate-700">
                     <span className="font-semibold text-slate-800">{item.topicTitle}</span>
-                    <span className="text-slate-500"> � {item.minutes} min</span>
+                    <span className="text-slate-500"> · {item.minutes} min</span>
                   </div>
                 ))}
               </div>
@@ -402,3 +413,4 @@ function HomePage() {
 }
 
 export default HomePage;
+

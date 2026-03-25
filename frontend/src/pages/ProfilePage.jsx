@@ -139,119 +139,132 @@ function ProfilePage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="surface-card p-5">
-        <div className="flex flex-col items-center">
-          <div className="relative">
-            <label
-              htmlFor="profile-image-upload"
-              className={
-                uploading
-                  ? "cursor-not-allowed"
-                  : "cursor-pointer flex items-center justify-center"
-              }
-            >
-              {user?.profileImageUrl ? (
-                <img
-                  src={user.profileImageUrl}
-                  alt="Profile"
-                  className="h-24 w-24 rounded-full border border-white object-cover shadow-soft"
-                />
-              ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">
-                  {initials}
-                </div>
-              )}
-              {!uploading && (
-                <span className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-white text-xs flex items-center justify-center shadow-sm">
-                  ?
-                </span>
-              )}
-            </label>
+    <div className="space-y-5">
+      <div className="surface-card p-5 md:p-6">
+        <div className="grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
+          <div className="flex flex-col items-center md:items-start">
+            <div className="relative">
+              <label
+                htmlFor="profile-image-upload"
+                className={
+                  uploading
+                    ? "cursor-not-allowed"
+                    : "cursor-pointer flex items-center justify-center"
+                }
+              >
+                {user?.profileImageUrl ? (
+                  <img
+                    src={user.profileImageUrl}
+                    alt="Profile"
+                    className="h-24 w-24 rounded-full border border-white object-cover shadow-soft"
+                  />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-700">
+                    {initials}
+                  </div>
+                )}
+                {!uploading && (
+                  <span className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-white text-xs flex items-center justify-center shadow-sm">
+                    ?
+                  </span>
+                )}
+              </label>
+            </div>
+            <input
+              id="profile-image-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Profile photo
+            </p>
           </div>
 
-          <input
-            id="profile-image-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-
-          {editing ? (
-            <div className="space-y-3 mt-4 w-full">
-              <input
-                className="field-input w-full"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Full name"
-              />
-              <input
-                className="field-input w-full"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="Email"
-                type="email"
-              />
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  disabled={saving}
-                  onClick={() => setEditing(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={saving}
-                  onClick={async () => {
-                    setSaving(true);
-                    try {
-                      const updated = await profileService.updateProfile({
-                        name: editName,
-                        email: editEmail,
-                      });
-                      setUser((prev) => ({ ...prev, ...updated }));
-                      setEditing(false);
-                    } catch (err) {
-                      // could show a toast or error state here
-                    } finally {
-                      setSaving(false);
-                    }
-                  }}
-                >
-                  {saving ? "Saving..." : "Save"}
-                </button>
+          <div className="space-y-3 text-center md:text-left">
+            {editing ? (
+              <div className="space-y-3">
+                <input
+                  className="field-input w-full"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Full name"
+                />
+                <input
+                  className="field-input w-full"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                />
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 sm:w-auto"
+                    disabled={saving}
+                    onClick={() => setEditing(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary w-full px-6 sm:w-auto"
+                    disabled={saving}
+                    onClick={async () => {
+                      setSaving(true);
+                      try {
+                        const updated = await profileService.updateProfile({
+                          name: editName,
+                          email: editEmail,
+                        });
+                        setUser((prev) => ({ ...prev, ...updated }));
+                        setEditing(false);
+                      } catch (err) {
+                        // could show a toast or error state here
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                  >
+                    {saving ? "Saving..." : "Save"}
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <>
-              <p className="mt-4 text-lg font-semibold text-slate-800">{user?.name || "-"}</p>
-              <p className="text-sm text-slate-500">{user?.email || "-"}</p>
-              <button
-                type="button"
-                className="btn-secondary mt-4"
-                onClick={() => {
-                  setEditName(user?.name || "");
-                  setEditEmail(user?.email || "");
-                  setEditing(true);
-                }}
-              >
-                Edit profile
-              </button>
-            </>
-          )}
-
-          <button type="button" onClick={logout} className="btn-secondary mt-4">
-            Logout
-          </button>
+            ) : (
+              <>
+                <div>
+                  <p className="text-lg font-semibold text-slate-800">{user?.name || "-"}</p>
+                  <p className="text-sm text-slate-500">{user?.email || "-"}</p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 sm:w-auto"
+                    onClick={() => {
+                      setEditName(user?.name || "");
+                      setEditEmail(user?.email || "");
+                      setEditing(true);
+                    }}
+                  >
+                    Edit profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 sm:w-auto"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="surface-card p-5">
+      <div className="surface-card p-5 md:p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="section-title">Personal Study Goals</p>

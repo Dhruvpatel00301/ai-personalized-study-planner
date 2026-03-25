@@ -11,7 +11,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!token) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/landing" replace state={{ from: location }} />;
   }
 
   return children;
