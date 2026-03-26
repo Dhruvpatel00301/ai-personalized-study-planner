@@ -10,7 +10,7 @@ function WeakCoveragePieChart({ pieChart }) {
     datasets: [
       {
         data: [pieChart.weakCompleted, pieChart.weakPending],
-        backgroundColor: ["#348ef8", "#b4d9ff"],
+        backgroundColor: ["#a855f7", "#ddd6fe"],
         borderWidth: 0,
       },
     ],

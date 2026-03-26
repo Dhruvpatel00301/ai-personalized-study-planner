@@ -4,12 +4,12 @@
 
 :root {
   font-family: "Manrope", "Nunito Sans", "Segoe UI", sans-serif;
-  --page-bg-top: #f2f8ff;
-  --page-bg-bottom: #d8e8ff;
-  --ink-main: #0f2f52;
-  --ink-soft: #4c6786;
-  --brand-main: #348ef8;
-  --brand-deep: #2263be;
+  --page-bg-top: #f7f5ff;
+  --page-bg-bottom: #f7f5ff;
+  --ink-main: #1f1937;
+  --ink-soft: #5b5176;
+  --brand-main: #a855f7;
+  --brand-deep: #6d28d9;
 }
 
 body {
@@ -17,7 +17,7 @@ body {
   min-height: 100vh;
   background:
     radial-gradient(120% 90% at 10% -10%, #ffffff 0%, rgba(255, 255, 255, 0) 55%),
-    radial-gradient(100% 80% at 90% -10%, #dceeff 0%, rgba(220, 238, 255, 0) 65%),
+    radial-gradient(100% 80% at 90% -10%, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0) 65%),
     linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%);
   color: var(--ink-main);
   overflow-x: hidden;
@@ -32,7 +32,7 @@ html {
 }
 
 *::selection {
-  background: rgba(52, 142, 248, 0.22);
+  background: rgba(168, 85, 247, 0.22);
 }
 
 .app-shell {
@@ -55,8 +55,8 @@ html {
 @layer components {
   .surface-card {
     @apply rounded-card border bg-white shadow-soft backdrop-blur-sm;
-    border-color: rgba(255, 255, 255, 0.7);
-    background-color: rgba(255, 255, 255, 0.88);
+    border-color: #e4def7;
+    background-color: rgba(255, 255, 255, 0.94);
   }
 
   .section-title {
@@ -68,14 +68,14 @@ html {
   }
 
   .field-input:focus {
-    border-color: #74b4fb;
-    box-shadow: 0 0 0 3px rgba(52, 142, 248, 0.15);
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
   }
 
   .btn-primary {
     @apply w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition;
     background: linear-gradient(135deg, var(--brand-main), var(--brand-deep));
-    box-shadow: 0 8px 18px rgba(34, 99, 190, 0.24);
+    box-shadow: 0 8px 18px rgba(109, 40, 217, 0.28);
   }
 
   .btn-primary:disabled {

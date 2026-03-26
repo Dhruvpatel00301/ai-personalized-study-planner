@@ -5,16 +5,16 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: "#eef7ff",
-          100: "#d8ebff",
-          200: "#b4d9ff",
-          300: "#84beff",
-          500: "#348ef8",
-          700: "#2263be",
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          500: "#a855f7",
+          700: "#6d28d9",
         },
       },
       boxShadow: {
-        soft: "0 8px 30px rgba(52, 142, 248, 0.18)",
+        soft: "0 8px 30px rgba(109, 40, 217, 0.18)",
       },
       borderRadius: {
         card: "1rem",

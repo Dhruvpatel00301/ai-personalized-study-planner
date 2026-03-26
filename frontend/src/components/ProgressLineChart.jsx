@@ -18,8 +18,8 @@ function ProgressLineChart({ lineChart }) {
       {
         label: "Progress",
         data: lineChart.map((item) => item.progressPercent),
-        borderColor: "#348ef8",
-        backgroundColor: "rgba(52, 142, 248, 0.2)",
+        borderColor: "#a855f7",
+        backgroundColor: "rgba(168, 85, 247, 0.2)",
         tension: 0.35,
       },
     ],
